@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/docs/">
+    <File Path="../CLAUDE.md" />
+    <File Path="../docs/architecture.md" />
+    <File Path="../docs/coding-guidelines.md" />
+    <File Path="../docs/devplan.md" />
+    <File Path="../docs/rules.md" />
+    <File Path="../README.md" />
+  </Folder>
+  <Folder Name="/docs/UI/">
+    <File Path="../docs/UI/GwiOS.WebUI.Design.html" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="GwiOS.Core/GwiOS.Core.csproj" Id="aca45ff9-131c-4bdc-9602-f87aa9751170" />
+    <Project Path="GwiOS.WebUI/GwiOS.WebUI.csproj" Id="6664335d-ee52-41ea-beaf-b0081bdac66b" />
+  </Folder>
+  <Folder Name="/tests/" />
+</Solution>
