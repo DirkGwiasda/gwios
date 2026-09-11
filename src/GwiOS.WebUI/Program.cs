@@ -2,6 +2,9 @@ using GwiOS.Core;
 using GwiOS.Core.CrossCutting.Logging.Contracts;
 using GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement.Contracts;
 using GwiOS.WebUI.Components;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
 
 namespace GwiOS.WebUI;
 
@@ -17,6 +20,33 @@ public class Program
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents();
         builder.Services.AddGwiOSCore(GetGwiOSConnectionString(builder.Configuration));
+
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+        })
+            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
+            {
+                options.Authority = builder.Configuration["Keycloak:Authority"];
+                options.ClientId = builder.Configuration["Keycloak:ClientId"];
+                options.ClientSecret = builder.Configuration["Keycloak:ClientSecret"];
+
+                options.ResponseType = "code";
+                options.SaveTokens = true;
+                options.GetClaimsFromUserInfoEndpoint = true;
+                options.RequireHttpsMetadata = true; // In Produktion auf 'true' stellen!
+
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    NameClaimType = "preferred_username", // Keycloak standardmäßig
+                    RoleClaimType = "roles"
+                };
+            });
+
+        builder.Services.AddAuthorization();
+        builder.Services.AddCascadingAuthenticationState();
 
         WebApplication app = builder.Build();
 
@@ -34,6 +64,11 @@ public class Program
         app.UseHttpsRedirection();
 
         app.UseAntiforgery();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.MapGet("/login", () => Results.Challenge(new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/" }, [OpenIdConnectDefaults.AuthenticationScheme]));
+        app.MapGet("/logout", () => Results.SignOut(new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/" }, [CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme]));
 
         app.MapStaticAssets();
         app.MapRazorComponents<App>()
