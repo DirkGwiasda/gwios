@@ -8,8 +8,8 @@ namespace GwiOS.Core.CrossCutting.Logging.Contracts;
 public interface ILogEntryRepository
 {
     /// <summary>
-    /// Creates the storage required for log entries, including the database itself, unless it already exists.
-    /// The operation is idempotent: calling it against existing storage changes nothing.
+    /// Creates the tables required for log entries unless they already exist. The database itself must already
+    /// exist. The operation is idempotent: calling it against existing tables changes nothing.
     /// </summary>
     Task EnsureStorageCreatedAsync();
 

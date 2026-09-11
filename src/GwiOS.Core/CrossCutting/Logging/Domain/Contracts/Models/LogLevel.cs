@@ -5,6 +5,9 @@ namespace GwiOS.Core.CrossCutting.Logging.Domain.Contracts.Models;
 /// </summary>
 public enum LogLevel
 {
+    /// <summary>
+    /// Default value of an unset level. Not used for real log entries.
+    /// </summary>
     None = 0,
 
     /// <summary>

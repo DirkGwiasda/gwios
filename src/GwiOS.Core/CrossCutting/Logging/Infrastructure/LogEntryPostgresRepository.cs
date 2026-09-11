@@ -2,7 +2,6 @@ using System.Data;
 using System.Text.Json;
 using GwiOS.Core.CrossCutting.Logging.Contracts;
 using GwiOS.Core.CrossCutting.Logging.Domain.Contracts.Models;
-using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using NpgsqlTypes;
 
@@ -11,21 +10,8 @@ namespace GwiOS.Core.CrossCutting.Logging.Infrastructure;
 /// <summary>
 /// Stores log entries in the table <c>logging.log_entries</c> of the GwiOS PostgreSQL database, using plain SQL.
 /// </summary>
-internal sealed class LogEntryPostgresRepository(
-    NpgsqlDataSource dataSource,
-    [FromKeyedServices(LogEntryPostgresRepository.MaintenanceDataSourceKey)] NpgsqlDataSource maintenanceDataSource)
-    : ILogEntryRepository
+internal sealed class LogEntryPostgresRepository(NpgsqlDataSource dataSource) : ILogEntryRepository
 {
-    /// <summary>
-    /// Service key of the data source that connects to the server's maintenance database instead of the GwiOS
-    /// database. It is needed to create the GwiOS database, which cannot be connected to before it exists.
-    /// </summary>
-    internal const string MaintenanceDataSourceKey = "GwiOS.Postgres.Maintenance";
-
-    private const string DatabaseExistsSql = """
-        SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = @database_name)
-        """;
-
     private const string CreateTablesSql = """
         CREATE SCHEMA IF NOT EXISTS logging;
 
@@ -68,12 +54,11 @@ internal sealed class LogEntryPostgresRepository(
         """;
 
     private readonly NpgsqlDataSource _dataSource = dataSource;
-    private readonly NpgsqlDataSource _maintenanceDataSource = maintenanceDataSource;
 
     public async Task EnsureStorageCreatedAsync()
     {
-        await EnsureDatabaseCreatedAsync();
-        await EnsureTablesCreatedAsync();
+        await using NpgsqlCommand command = _dataSource.CreateCommand(CreateTablesSql);
+        await command.ExecuteNonQueryAsync();
     }
 
     public async Task InsertAsync(LogEntry logEntry)
@@ -100,58 +85,6 @@ internal sealed class LogEntryPostgresRepository(
     {
         await using NpgsqlCommand command = _dataSource.CreateCommand(DeleteByAppNameSql);
         command.Parameters.AddWithValue("app_name", appName);
-        await command.ExecuteNonQueryAsync();
-    }
-
-    private async Task EnsureDatabaseCreatedAsync()
-    {
-        string databaseName = GetDatabaseName();
-        if (await DatabaseExistsAsync(databaseName))
-        {
-            return;
-        }
-
-        await CreateDatabaseUnlessCreatedConcurrentlyAsync(databaseName);
-    }
-
-    private string GetDatabaseName()
-        => new NpgsqlConnectionStringBuilder(_dataSource.ConnectionString).Database
-            ?? throw new InvalidOperationException(
-                "The connection string of the GwiOS data source does not specify a database (Database=...).");
-
-    private async Task<bool> DatabaseExistsAsync(string databaseName)
-    {
-        await using NpgsqlCommand command = _maintenanceDataSource.CreateCommand(DatabaseExistsSql);
-        command.Parameters.AddWithValue("database_name", databaseName);
-        return (bool)(await command.ExecuteScalarAsync())!;
-    }
-
-    private async Task CreateDatabaseUnlessCreatedConcurrentlyAsync(string databaseName)
-    {
-        try
-        {
-            await CreateDatabaseAsync(databaseName);
-        }
-        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.DuplicateDatabase)
-        {
-            // Another instance created the database between the existence check and this call - the desired state.
-        }
-    }
-
-    private async Task CreateDatabaseAsync(string databaseName)
-    {
-        // CREATE DATABASE accepts no parameters, so the name has to be embedded as a quoted identifier.
-        await using NpgsqlCommand command =
-            _maintenanceDataSource.CreateCommand($"CREATE DATABASE {QuoteIdentifier(databaseName)}");
-        await command.ExecuteNonQueryAsync();
-    }
-
-    private static string QuoteIdentifier(string identifier)
-        => $"\"{identifier.Replace("\"", "\"\"")}\"";
-
-    private async Task EnsureTablesCreatedAsync()
-    {
-        await using NpgsqlCommand command = _dataSource.CreateCommand(CreateTablesSql);
         await command.ExecuteNonQueryAsync();
     }
 

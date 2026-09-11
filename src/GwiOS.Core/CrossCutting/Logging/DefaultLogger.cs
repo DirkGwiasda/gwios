@@ -4,9 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace GwiOS.Core.CrossCutting.Logging;
 
-internal sealed class DefaultLogger<T>(IServiceScopeFactory _scopeFactory) : ILogger<T>
+internal sealed class DefaultLogger<T>(IServiceScopeFactory scopeFactory) : ILogger<T>
 {
     private static readonly string DefaultAppName = "GwiOS";
+
+    private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
 
     public void LogDebug(string message)
         => Log(DefaultAppName, message, LogLevel.Debug);
