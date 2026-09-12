@@ -1,0 +1,177 @@
+.gwios-status-bar {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 55;
+    height: var(--gwios-status-bar-height);
+    border-top: 1px solid rgba(0, 136, 255, 0.18);
+    background: rgba(7, 10, 15, 0.9);
+    backdrop-filter: blur(10px);
+}
+
+.gwios-status-bar-button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: 100%;
+    padding: 0 24px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.gwios-status-text {
+    overflow: hidden;
+    color: var(--gwios-text);
+    font-size: 13px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    animation: gwios-status-bar-pop 0.3s ease;
+}
+
+.gwios-status-time {
+    flex-shrink: 0;
+    color: var(--gwios-text-dim);
+    font-size: 12px;
+}
+
+.gwios-status-bar-time {
+    margin-left: auto;
+}
+
+.gwios-status-toggle {
+    flex-shrink: 0;
+    margin-left: auto;
+    color: var(--gwios-text-dim);
+    font-size: 11px;
+}
+
+.gwios-status-bar-time + .gwios-status-toggle {
+    margin-left: 0;
+}
+
+.gwios-status-dot {
+    flex-shrink: 0;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+
+.gwios-status-dot--neutral {
+    background: var(--gwios-text-dim);
+    box-shadow: 0 0 6px var(--gwios-text-dim);
+}
+
+.gwios-status-dot--success {
+    background: var(--gwios-primary);
+    box-shadow: 0 0 6px var(--gwios-primary);
+}
+
+.gwios-status-dot--warning {
+    background: var(--gwios-warning);
+    box-shadow: 0 0 6px var(--gwios-warning);
+}
+
+.gwios-status-dot--error {
+    background: var(--gwios-danger);
+    box-shadow: 0 0 6px var(--gwios-danger);
+    animation: gwios-status-dot-pulse 1.4s ease-in-out infinite;
+}
+
+.gwios-status-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: rgba(7, 10, 15, 0.7);
+    backdrop-filter: blur(3px);
+}
+
+.gwios-status-history {
+    position: fixed;
+    right: 16px;
+    bottom: 52px;
+    left: 16px;
+    z-index: 61;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 520px;
+    max-height: 50vh;
+    margin: 0 auto;
+    padding: 18px;
+    overflow-y: auto;
+    border: 1px solid var(--gwios-border);
+    border-radius: var(--gwios-radius-large);
+    background: rgba(11, 18, 32, 0.97);
+    box-shadow: 0 0 40px rgba(0, 136, 255, 0.2), 0 20px 50px rgba(0, 0, 0, 0.5);
+    animation: gwios-status-history-slide-up 0.25s ease;
+}
+
+.gwios-status-history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.gwios-status-history-title {
+    margin: 0;
+    color: var(--gwios-primary);
+    font-family: var(--gwios-font-display);
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.gwios-status-history-close {
+    border: none;
+    background: none;
+    color: var(--gwios-text-muted);
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.gwios-status-history-entry {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0, 136, 255, 0.12);
+}
+
+.gwios-status-history-text {
+    flex: 1;
+    color: var(--gwios-text);
+    font-size: 13px;
+}
+
+@keyframes gwios-status-bar-pop {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gwios-status-history-slide-up {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gwios-status-dot-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
+}
+
+@media (max-width: 820px) {
+    .gwios-status-bar-button {
+        padding: 0 16px;
+    }
+
+    .gwios-status-bar-time {
+        display: none;
+    }
+
+    .gwios-status-bar-time + .gwios-status-toggle {
+        margin-left: auto;
+    }
+}

@@ -1,0 +1,45 @@
+@page "/admin/benutzer"
+
+<PageTitle>Benutzerverwaltung · gwi-os</PageTitle>
+
+<div class="gwios-page">
+    <h1>Benutzerverwaltung</h1>
+
+    <div class="gwios-stack">
+        @if (_persons.Count == 0)
+        {
+            <div class="gwios-panel">
+                <p class="gwios-empty">Keine Personen vorhanden.</p>
+            </div>
+        }
+        else
+        {
+            <div class="gwios-tile-grid gwios-tile-grid--compact">
+                @foreach (Person person in _persons)
+                {
+                    <GwiOSPersonTile @key="person.Id" Person="person" OnDelete="() => DeletePersonAsync(person)" />
+                }
+            </div>
+        }
+
+        <div class="gwios-form-panel">
+            <GwiOSTextBox @bind-Value="_newName"
+                          Placeholder="Name"
+                          AriaLabel="Name der neuen Person"
+                          MaxLength="100"
+                          IsRequired="true"
+                          RequiredMessage="Bitte einen Namen eingeben."
+                          OnEnter="AddPersonAsync" />
+            <GwiOSTextBox @bind-Value="_newShortName"
+                          Placeholder="Kurzname"
+                          AriaLabel="Kurzname der neuen Person"
+                          MaxLength="30"
+                          IsRequired="true"
+                          RequiredMessage="Bitte einen Kurznamen eingeben."
+                          OnEnter="AddPersonAsync" />
+            <button type="button" class="gwios-button" disabled="@(!CanAddPerson)" @onclick="AddPersonAsync">
+                Hinzufügen
+            </button>
+        </div>
+    </div>
+</div>

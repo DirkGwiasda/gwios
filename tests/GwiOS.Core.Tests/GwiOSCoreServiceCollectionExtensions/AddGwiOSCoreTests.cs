@@ -6,6 +6,10 @@ using GwiOS.Core.CrossCutting.Logging.Infrastructure;
 using GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement;
 using GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement.Contracts;
 using GwiOS.Core.CrossCutting.Persons.Infrastructure;
+using GwiOS.Core.Tests.TestInfrastructure;
+using GwiOS.Core.ToDos.Domain.Managers.ToDoManagement;
+using GwiOS.Core.ToDos.Domain.Managers.ToDoManagement.Contracts;
+using GwiOS.Core.ToDos.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 
@@ -73,6 +77,51 @@ public sealed class AddGwiOSCoreTests : IDisposable
         IPersonManager personManager = _scope.ServiceProvider.GetRequiredService<IPersonManager>();
 
         Assert.IsType<PersonManager>(personManager);
+    }
+
+    [Fact]
+    public void RegistersThePostgresRepositoryAsToDoRepository()
+    {
+        IToDoRepository toDoRepository = _scope.ServiceProvider.GetRequiredService<IToDoRepository>();
+
+        Assert.IsType<ToDoPostgresRepository>(toDoRepository);
+    }
+
+    [Fact]
+    public void RegistersTheToDoValidator()
+    {
+        IToDoValidator toDoValidator = _scope.ServiceProvider.GetRequiredService<IToDoValidator>();
+
+        Assert.IsType<ToDoValidator>(toDoValidator);
+    }
+
+    [Fact]
+    public void RegistersTheToDoManager()
+    {
+        IToDoManager toDoManager = _scope.ServiceProvider.GetRequiredService<IToDoManager>();
+
+        Assert.IsType<ToDoManager>(toDoManager);
+    }
+
+    [Fact]
+    public void RegistersTheSystemClockAsTimeProvider()
+    {
+        TimeProvider timeProvider = _serviceProvider.GetRequiredService<TimeProvider>();
+
+        Assert.Same(TimeProvider.System, timeProvider);
+    }
+
+    [Fact]
+    public void KeepsATimeProviderRegisteredBefore()
+    {
+        TimeProviderFake timeProvider = new();
+        ServiceCollection services = new();
+        services.AddSingleton<TimeProvider>(timeProvider);
+
+        services.AddGwiOSCore(ConnectionString);
+
+        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        Assert.Same(timeProvider, serviceProvider.GetRequiredService<TimeProvider>());
     }
 
     [Fact]

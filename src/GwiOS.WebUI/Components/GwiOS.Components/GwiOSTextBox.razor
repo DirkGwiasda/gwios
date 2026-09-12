@@ -1,0 +1,12 @@
+<input type="text"
+       class="gwios-input @(IsInvalid ? "gwios-input--invalid" : null) @CssClass"
+       value="@Value"
+       placeholder="@Placeholder"
+       maxlength="@MaxLength"
+       aria-label="@(AriaLabel ?? Placeholder)"
+       aria-invalid="@(IsInvalid ? "true" : null)"
+       title="@(IsInvalid ? RequiredMessage : null)"
+       @oninput="OnInputAsync"
+       @onchange="OnChangeAsync"
+       @onkeydown="OnKeyDownAsync"
+       @attributes="AdditionalAttributes" />

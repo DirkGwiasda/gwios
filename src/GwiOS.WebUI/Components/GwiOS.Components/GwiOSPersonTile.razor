@@ -1,0 +1,39 @@
+<article class="gwios-person-tile">
+    <span class="gwios-person-avatar" aria-hidden="true">@Initial</span>
+    <div class="gwios-person-names">
+        <span class="gwios-person-name">@Person.Name</span>
+        <span class="gwios-person-short-name">@Person.ShortName</span>
+    </div>
+    @if (Person.IdentityUserId is null)
+    {
+        <span class="gwios-badge gwios-badge--muted" title="Die Person hat kein Benutzerkonto.">ohne Konto</span>
+    }
+    else
+    {
+        <span class="gwios-badge" title="Die Person meldet sich mit einem Benutzerkonto an.">Konto</span>
+    }
+    <GwiOSConfirmButton Title="@($"„{Person.Name}“ löschen")"
+                        ConfirmText="Löschen?"
+                        CssClass="gwios-icon-button"
+                        ConfirmCssClass="gwios-icon-button gwios-icon-button--danger"
+                        OnConfirmed="OnDelete">
+        ✕
+    </GwiOSConfirmButton>
+</article>
+
+@code {
+    /// <summary>
+    /// The person the tile shows.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public Person Person { get; set; } = default!;
+
+    /// <summary>
+    /// Raised when the user deletes the person and confirms it with a second click.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnDelete { get; set; }
+
+    private string Initial
+        => Person.ShortName.Length > 0 ? Person.ShortName[..1].ToUpperInvariant() : "?";
+}

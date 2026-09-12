@@ -1,35 +1,24 @@
-﻿@inherits LayoutComponentBase
-@using Microsoft.AspNetCore.Components.Authorization
+@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
+<div class="gwios-app">
+    <div class="gwios-backdrop" aria-hidden="true">
+        <div class="gwios-backdrop-gradient"></div>
+        <div class="gwios-backdrop-orb gwios-backdrop-orb--blue"></div>
+        <div class="gwios-backdrop-orb gwios-backdrop-orb--green"></div>
+        <div class="gwios-backdrop-stars"></div>
     </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-            <AuthorizeView>
-                <Authorized>
-                    <p>Angemeldet als: @context.User.Identity?.Name</p>
-                </Authorized>
-                <NotAuthorized>
-                    <p>Nicht angemeldet (Identity.IsAuthenticated = false)</p>
-                </NotAuthorized>
-            </AuthorizeView>
-        </div>
+    <AppHeader />
 
-        <article class="content px-4">
-
-            
-
-            @Body
-        </article>
+    <main class="gwios-main">
+        @Body
     </main>
+
+    <GwiOSStatusBar />
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
+    Ein unerwarteter Fehler ist aufgetreten.
+    <a href="." class="reload">Neu laden</a>
     <span class="dismiss">🗙</span>
 </div>

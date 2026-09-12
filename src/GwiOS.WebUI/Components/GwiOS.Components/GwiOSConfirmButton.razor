@@ -1,0 +1,77 @@
+<button type="button"
+        class="@(_isAwaitingConfirmation ? ConfirmCssClass : CssClass)"
+        title="@(_isAwaitingConfirmation ? ConfirmText : Title)"
+        aria-label="@(_isAwaitingConfirmation ? ConfirmText : Title)"
+        disabled="@IsDisabled"
+        @onclick="OnClickAsync"
+        @onblur="CancelConfirmation">
+    @if (_isAwaitingConfirmation)
+    {
+        @ConfirmText
+    }
+    else
+    {
+        @ChildContent
+    }
+</button>
+
+@code {
+    private bool _isAwaitingConfirmation;
+
+    /// <summary>
+    /// Content of the button before it is clicked, such as a text or a symbol.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Text the button shows after the first click, asking to click again to confirm.
+    /// </summary>
+    [Parameter]
+    public string ConfirmText { get; set; } = "Wirklich löschen?";
+
+    /// <summary>
+    /// Tooltip and accessible name of the button before it is clicked, or <c>null</c> for none.
+    /// </summary>
+    [Parameter]
+    public string? Title { get; set; }
+
+    /// <summary>
+    /// CSS classes of the button before it is clicked.
+    /// </summary>
+    [Parameter]
+    public string CssClass { get; set; } = "gwios-button";
+
+    /// <summary>
+    /// CSS classes of the button while it waits for the confirming second click.
+    /// </summary>
+    [Parameter]
+    public string ConfirmCssClass { get; set; } = "gwios-button gwios-button--danger";
+
+    /// <summary>
+    /// Whether the button is disabled.
+    /// </summary>
+    [Parameter]
+    public bool IsDisabled { get; set; }
+
+    /// <summary>
+    /// Raised when the user clicks the button a second time to confirm. Leaving the button in between cancels.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnConfirmed { get; set; }
+
+    private async Task OnClickAsync()
+    {
+        if (!_isAwaitingConfirmation)
+        {
+            _isAwaitingConfirmation = true;
+            return;
+        }
+
+        _isAwaitingConfirmation = false;
+        await OnConfirmed.InvokeAsync();
+    }
+
+    private void CancelConfirmation()
+        => _isAwaitingConfirmation = false;
+}

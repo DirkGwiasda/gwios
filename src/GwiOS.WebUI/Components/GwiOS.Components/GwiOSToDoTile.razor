@@ -1,0 +1,33 @@
+<article class="gwios-todo-tile @(ToDo.IsCompleted ? "gwios-todo-tile--completed" : null)">
+    <div class="gwios-todo-tile-header">
+        <span class="gwios-todo-tile-title">@ToDo.Title</span>
+        <div class="gwios-todo-tile-actions">
+            @if (!ToDo.IsCompleted)
+            {
+                <button type="button"
+                        class="gwios-icon-button gwios-icon-button--success"
+                        title="Als erledigt markieren"
+                        aria-label="@($"„{ToDo.Title}“ als erledigt markieren")"
+                        @onclick="OnComplete">
+                    ✓
+                </button>
+            }
+            <button type="button"
+                    class="gwios-icon-button"
+                    title="Löschen"
+                    aria-label="@($"„{ToDo.Title}“ löschen")"
+                    @onclick="OnDelete">
+                ✕
+            </button>
+        </div>
+    </div>
+    @if (ShowsDueDate)
+    {
+        <div class="gwios-todo-tile-meta">
+            <span class="gwios-due-date @(IsOverdue ? "gwios-due-date--overdue" : null)"
+                  title="@(IsOverdue ? "Überfällig" : "Fällig")">
+                ⏰ @DueDateLabel
+            </span>
+        </div>
+    }
+</article>

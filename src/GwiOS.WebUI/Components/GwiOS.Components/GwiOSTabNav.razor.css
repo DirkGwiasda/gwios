@@ -1,0 +1,40 @@
+.gwios-tab-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 20px;
+}
+
+.gwios-tab-nav ::deep .gwios-tab {
+    padding: 9px 20px;
+    border: 1px solid var(--gwios-border);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--gwios-text-muted);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.gwios-tab-nav ::deep .gwios-tab:hover {
+    color: var(--gwios-primary-hover);
+}
+
+.gwios-tab-nav ::deep .gwios-tab.active {
+    border-color: var(--gwios-border-strong);
+    background: var(--gwios-gradient-selected);
+    color: var(--gwios-primary);
+}
+
+@media (max-width: 820px) {
+    .gwios-tab-nav {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .gwios-tab-nav ::deep .gwios-tab {
+        flex-shrink: 0;
+    }
+}

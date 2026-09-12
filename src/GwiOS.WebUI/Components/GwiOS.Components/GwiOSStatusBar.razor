@@ -1,0 +1,43 @@
+@implements IDisposable
+
+@if (_isHistoryOpen)
+{
+    <div class="gwios-status-backdrop" @onclick="ToggleHistory"></div>
+    <section class="gwios-status-history" aria-label="Statusverlauf">
+        <header class="gwios-status-history-header">
+            <h2 class="gwios-status-history-title">Statusverlauf</h2>
+            <button type="button" class="gwios-status-history-close" aria-label="Verlauf schließen" @onclick="ToggleHistory">
+                ✕
+            </button>
+        </header>
+        @if (StatusMessages.Messages.Count == 0)
+        {
+            <p class="gwios-empty">Keine Statusmeldungen.</p>
+        }
+        @foreach (StatusMessage message in NewestFirst)
+        {
+            <div class="gwios-status-history-entry" @key="message.Id">
+                <span class="gwios-status-dot @GetDotClass(message.Level)"></span>
+                <span class="gwios-status-history-text">@message.Text</span>
+                <span class="gwios-status-time">@FormatTime(message)</span>
+            </div>
+        }
+    </section>
+}
+
+<footer class="gwios-status-bar">
+    <button type="button" class="gwios-status-bar-button" aria-expanded="@(_isHistoryOpen ? "true" : "false")" @onclick="ToggleHistory">
+        @if (CurrentMessage is null)
+        {
+            <span class="gwios-status-dot gwios-status-dot--neutral"></span>
+            <span class="gwios-status-text">Keine Statusmeldungen</span>
+        }
+        else
+        {
+            <span class="gwios-status-dot @GetDotClass(CurrentMessage.Level)"></span>
+            <span class="gwios-status-text" role="status" @key="CurrentMessage.Id">@CurrentMessage.Text</span>
+            <span class="gwios-status-time gwios-status-bar-time">@FormatTime(CurrentMessage)</span>
+        }
+        <span class="gwios-status-toggle">Verlauf @(_isHistoryOpen ? "▼" : "▲")</span>
+    </button>
+</footer>

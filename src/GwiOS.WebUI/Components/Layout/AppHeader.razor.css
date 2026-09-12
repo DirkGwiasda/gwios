@@ -1,0 +1,163 @@
+.gwios-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid rgba(0, 136, 255, 0.15);
+    background: linear-gradient(180deg, rgba(7, 10, 15, 0.85), rgba(7, 10, 15, 0.55));
+    backdrop-filter: blur(10px);
+    animation: gwios-header-glow 17.5s ease-in-out infinite;
+}
+
+.gwios-header-inner {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    max-width: var(--gwios-content-width);
+    margin: 0 auto;
+    padding: 14px 40px;
+}
+
+.gwios-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+.gwios-brand-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--gwios-radius);
+    object-fit: cover;
+    animation: gwios-logo-breathe 11s ease-in-out infinite;
+}
+
+.gwios-brand-name {
+    color: var(--gwios-brand);
+    font-family: var(--gwios-font-display);
+    font-size: 18.4px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.gwios-nav-desktop {
+    display: flex;
+    gap: 22px;
+    margin-left: auto;
+}
+
+.gwios-nav-desktop ::deep .gwios-nav-link {
+    padding: 6px 0;
+    border-bottom: 2px solid transparent;
+    color: var(--gwios-text-muted);
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.25s ease, border-color 0.25s ease;
+}
+
+.gwios-nav-desktop ::deep .gwios-nav-link:hover {
+    color: var(--gwios-primary-hover);
+}
+
+.gwios-nav-desktop ::deep .gwios-nav-link.active {
+    border-bottom-color: var(--gwios-primary);
+    color: var(--gwios-primary);
+}
+
+.gwios-burger {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 44px;
+    height: 44px;
+    margin-left: auto;
+    border: 1px solid var(--gwios-border-control);
+    border-radius: 10px;
+    background: rgba(0, 136, 255, 0.06);
+    cursor: pointer;
+}
+
+.gwios-burger span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--gwios-primary);
+    transition: transform 0.25s ease, opacity 0.2s ease;
+}
+
+.gwios-burger--open span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+
+.gwios-burger--open span:nth-child(2) {
+    opacity: 0;
+}
+
+.gwios-burger--open span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+.gwios-nav-mobile {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 16px 16px;
+    border-top: 1px solid rgba(0, 136, 255, 0.15);
+    animation: gwios-nav-drop 0.22s ease;
+}
+
+.gwios-nav-mobile ::deep .gwios-nav-mobile-link {
+    display: block;
+    min-height: 44px;
+    padding: 13px 14px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: var(--gwios-text-muted);
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.gwios-nav-mobile ::deep .gwios-nav-mobile-link.active {
+    border-color: rgba(0, 136, 255, 0.45);
+    background: rgba(0, 136, 255, 0.12);
+    color: var(--gwios-primary);
+}
+
+@keyframes gwios-header-glow {
+    0%, 100% { box-shadow: 0 1px 0 rgba(0, 136, 255, 0.15); }
+    50% { box-shadow: 0 1px 16px rgba(0, 136, 255, 0.55); }
+}
+
+@keyframes gwios-logo-breathe {
+    0%, 100% { box-shadow: 0 0 10px rgba(0, 136, 255, 0.4); transform: scale(1); }
+    50% { box-shadow: 0 0 26px rgba(0, 136, 255, 0.95); transform: scale(1.06); }
+}
+
+@keyframes gwios-nav-drop {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 820px) {
+    .gwios-header-inner {
+        padding: 12px 16px;
+    }
+
+    .gwios-nav-desktop {
+        display: none;
+    }
+
+    .gwios-burger {
+        display: flex;
+    }
+
+    .gwios-nav-mobile {
+        display: flex;
+    }
+}

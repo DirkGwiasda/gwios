@@ -1,0 +1,50 @@
+<div class="gwios-pill-group" role="group" aria-label="@AriaLabel">
+    @foreach (string item in Items)
+    {
+        bool isSelected = item == SelectedItem;
+        <button type="button"
+                class="gwios-pill @(isSelected ? "gwios-pill--selected" : null)"
+                aria-pressed="@(isSelected ? "true" : "false")"
+                @onclick="() => SelectAsync(item)">
+            @item
+        </button>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// The selectable items in display order.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public IReadOnlyList<string> Items { get; set; } = [];
+
+    /// <summary>
+    /// The selected item, or <c>null</c> if none is selected.
+    /// </summary>
+    [Parameter]
+    public string? SelectedItem { get; set; }
+
+    /// <summary>
+    /// Raised with the item the user selects, so the selection can be bound with <c>@bind-SelectedItem</c>. Not
+    /// raised if the user clicks the item that is already selected.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> SelectedItemChanged { get; set; }
+
+    /// <summary>
+    /// Accessible name of the group.
+    /// </summary>
+    [Parameter]
+    public string AriaLabel { get; set; } = "Auswahl";
+
+    private async Task SelectAsync(string item)
+    {
+        if (item == SelectedItem)
+        {
+            return;
+        }
+
+        SelectedItem = item;
+        await SelectedItemChanged.InvokeAsync(item);
+    }
+}

@@ -1,0 +1,57 @@
+@page "/admin/logging"
+
+<PageTitle>System-Logs · gwi-os</PageTitle>
+
+<div class="gwios-page">
+    <h1>System-Logs</h1>
+
+    @if (_selectedAppName is null)
+    {
+        <div class="gwios-panel">
+            <p class="gwios-empty">Keine Log-Einträge vorhanden.</p>
+        </div>
+    }
+    else
+    {
+        <div class="gwios-log-toolbar">
+            <GwiOSPillGroup Items="_appNames"
+                            SelectedItem="@_selectedAppName"
+                            SelectedItemChanged="SelectAppAsync"
+                            AriaLabel="Anwendung" />
+            <div class="gwios-log-actions">
+                <button type="button" class="gwios-button" @onclick="ReloadEntriesAsync">Aktualisieren</button>
+                <GwiOSConfirmButton Title="@($"Alle Log-Einträge von „{_selectedAppName}“ löschen")"
+                                    ConfirmText="Wirklich alle löschen?"
+                                    OnConfirmed="DeleteEntriesAsync">
+                    Einträge löschen
+                </GwiOSConfirmButton>
+            </div>
+        </div>
+
+        <div class="gwios-table-panel">
+            <table class="gwios-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Zeitstempel</th>
+                        <th scope="col">Level</th>
+                        <th scope="col">Nachricht</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (LogEntry entry in _entries)
+                    {
+                        <tr @key="entry.Id">
+                            <td data-label="Zeitstempel" class="gwios-table-secondary">@FormatTimestamp(entry)</td>
+                            <td data-label="Level"><GwiOSLogLevelBadge Level="entry.LogLevel" /></td>
+                            <td data-label="Nachricht" class="gwios-log-message">@entry.Message</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            @if (_entries.Count == 0)
+            {
+                <p class="gwios-empty">Keine Einträge vorhanden.</p>
+            }
+        </div>
+    }
+</div>

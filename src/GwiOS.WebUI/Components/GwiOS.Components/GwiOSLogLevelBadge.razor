@@ -1,0 +1,28 @@
+<span class="gwios-log-level @LevelClass">@Label</span>
+
+@code {
+    /// <summary>
+    /// The severity the badge shows.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public LogLevel Level { get; set; }
+
+    private string Label
+        => Level switch
+        {
+            LogLevel.Error => "ERROR",
+            LogLevel.Warning => "WARN",
+            LogLevel.Information => "INFO",
+            LogLevel.Debug => "DEBUG",
+            _ => "NONE"
+        };
+
+    private string LevelClass
+        => Level switch
+        {
+            LogLevel.Error => "gwios-log-level--error",
+            LogLevel.Warning => "gwios-log-level--warning",
+            LogLevel.Information => "gwios-log-level--information",
+            _ => "gwios-log-level--debug"
+        };
+}

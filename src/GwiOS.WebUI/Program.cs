@@ -1,7 +1,10 @@
 using GwiOS.Core;
 using GwiOS.Core.CrossCutting.Logging.Contracts;
 using GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement.Contracts;
+using GwiOS.Core.ToDos.Domain.Managers.ToDoManagement.Contracts;
 using GwiOS.WebUI.Components;
+using GwiOS.WebUI.StatusMessages;
+using GwiOS.WebUI.StatusMessages.Contracts;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
@@ -20,6 +23,8 @@ public class Program
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents();
         builder.Services.AddGwiOSCore(GetGwiOSConnectionString(builder.Configuration));
+        // Scoped, so every circuit and thus every user session has status messages of its own.
+        builder.Services.AddScoped<IStatusMessageService, StatusMessageService>();
 
         builder.Services.AddAuthentication(options =>
         {
@@ -92,5 +97,7 @@ public class Program
         await logEntryRepository.EnsureStorageCreatedAsync();
         IPersonRepository personRepository = scope.ServiceProvider.GetRequiredService<IPersonRepository>();
         await personRepository.EnsureStorageCreatedAsync();
+        IToDoRepository toDoRepository = scope.ServiceProvider.GetRequiredService<IToDoRepository>();
+        await toDoRepository.EnsureStorageCreatedAsync();
     }
 }

@@ -6,8 +6,19 @@
 @using static Microsoft.AspNetCore.Components.Web.RenderMode
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @using Microsoft.JSInterop
-@using GwiOS.WebUI
-@using GwiOS.WebUI.Components
-@using GwiOS.WebUI.Components.Layout
+@using global::GwiOS.WebUI
+@using global::GwiOS.WebUI.Components
+@using global::GwiOS.WebUI.Components.Layout
+@using global::GwiOS.WebUI.Components.GwiOS.Components
+@using global::GwiOS.WebUI.StatusMessages.Contracts
+@using global::GwiOS.WebUI.StatusMessages.Contracts.Models
+@using global::GwiOS.Core.CrossCutting.Logging.Domain.Contracts
+@using global::GwiOS.Core.CrossCutting.Logging.Domain.Contracts.Models
+@using global::GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement.Contracts
+@using global::GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement.Contracts.Exceptions
+@using global::GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement.Contracts.Models
+@using global::GwiOS.Core.ToDos.Domain.Managers.ToDoManagement.Contracts
+@using global::GwiOS.Core.ToDos.Domain.Managers.ToDoManagement.Contracts.Exceptions
+@using global::GwiOS.Core.ToDos.Domain.Managers.ToDoManagement.Contracts.Models
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]

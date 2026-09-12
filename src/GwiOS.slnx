@@ -17,5 +17,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="../tests/GwiOS.Core.Tests/GwiOS.Core.Tests.csproj" Id="66723102-24fc-413b-8d81-cb3944a84d20" />
+    <Project Path="../tests/GwiOS.WebUI.Tests/GwiOS.WebUI.Tests.csproj" />
   </Folder>
 </Solution>

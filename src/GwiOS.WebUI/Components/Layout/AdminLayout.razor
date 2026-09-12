@@ -1,0 +1,13 @@
+@inherits LayoutComponentBase
+@layout MainLayout
+
+<GwiOSTabNav Tabs="AdminTabs" AriaLabel="Adminbereiche" />
+@Body
+
+@code {
+    private static readonly IReadOnlyList<GwiOSTab> AdminTabs =
+    [
+        new("Logging", "admin/logging"),
+        new("Benutzerverwaltung", "admin/benutzer")
+    ];
+}

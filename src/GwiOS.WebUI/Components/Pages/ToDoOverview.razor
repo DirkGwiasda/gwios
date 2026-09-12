@@ -1,0 +1,48 @@
+@page "/todos"
+
+<PageTitle>ToDos · gwi-os</PageTitle>
+
+<div class="gwios-page">
+    <h1>ToDo-Übersicht</h1>
+
+    <div class="gwios-toolbar">
+        <div class="gwios-toolbar-items">
+            <GwiOSTextBox @bind-Value="_newTitle"
+                          Placeholder="Titel…"
+                          AriaLabel="Titel des neuen ToDos"
+                          MaxLength="200"
+                          OnEnter="AddToDoAsync" />
+            <GwiOSDateBox @bind-Value="_newDueDate" AriaLabel="Fälligkeitsdatum des neuen ToDos" OnEnter="AddToDoAsync" />
+            <button type="button" class="gwios-button" disabled="@(!CanAddToDo)" @onclick="AddToDoAsync">
+                <span class="gwios-button-icon" aria-hidden="true">+</span> Neues ToDo
+            </button>
+        </div>
+    </div>
+
+    <div class="gwios-stack gwios-todo-sections">
+        <GwiOSSection Title="Offen" Count="OpenToDos.Count" IsEmpty="OpenToDos.Count == 0" EmptyText="Keine offenen Aufgaben.">
+            <div class="gwios-tile-grid">
+                @foreach (ToDo toDo in OpenToDos)
+                {
+                    <GwiOSToDoTile @key="toDo.Id"
+                                   ToDo="toDo"
+                                   OnComplete="() => CompleteToDoAsync(toDo)"
+                                   OnDelete="() => DeleteToDoAsync(toDo)" />
+                }
+            </div>
+        </GwiOSSection>
+
+        <GwiOSSection Title="Erledigt"
+                      Accent="GwiOSSectionAccent.Success"
+                      Count="CompletedToDos.Count"
+                      IsEmpty="CompletedToDos.Count == 0"
+                      EmptyText="Keine erledigten Aufgaben.">
+            <div class="gwios-tile-grid">
+                @foreach (ToDo toDo in CompletedToDos)
+                {
+                    <GwiOSToDoTile @key="toDo.Id" ToDo="toDo" OnDelete="() => DeleteToDoAsync(toDo)" />
+                }
+            </div>
+        </GwiOSSection>
+    </div>
+</div>

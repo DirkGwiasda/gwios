@@ -1,0 +1,76 @@
+.gwios-todo-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid var(--gwios-border);
+    border-radius: var(--gwios-radius);
+    background: var(--gwios-surface-tile);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.gwios-todo-tile:hover {
+    border-color: rgba(0, 136, 255, 0.45);
+    box-shadow: 0 0 14px rgba(0, 136, 255, 0.12);
+}
+
+.gwios-todo-tile--completed {
+    border-color: rgba(0, 255, 163, 0.15);
+    background: rgba(0, 255, 163, 0.03);
+    opacity: 0.8;
+}
+
+.gwios-todo-tile--completed:hover {
+    border-color: rgba(0, 255, 163, 0.3);
+    box-shadow: none;
+}
+
+.gwios-todo-tile-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.gwios-todo-tile-title {
+    flex: 1;
+    color: var(--gwios-text);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+.gwios-todo-tile--completed .gwios-todo-tile-title {
+    opacity: 0.65;
+    text-decoration: line-through;
+}
+
+.gwios-todo-tile-actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 4px;
+}
+
+.gwios-todo-tile-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.gwios-due-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    background: var(--gwios-surface);
+    color: var(--gwios-text-muted);
+    font-size: 12px;
+}
+
+.gwios-due-date--overdue {
+    border-color: rgba(255, 77, 109, 0.3);
+    color: var(--gwios-danger);
+}

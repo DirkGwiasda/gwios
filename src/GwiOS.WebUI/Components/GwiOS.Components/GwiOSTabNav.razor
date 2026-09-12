@@ -1,0 +1,20 @@
+<nav class="gwios-tab-nav" aria-label="@AriaLabel">
+    @foreach (GwiOSTab tab in Tabs)
+    {
+        <NavLink class="gwios-tab" href="@tab.Href" Match="NavLinkMatch.Prefix">@tab.Text</NavLink>
+    }
+</nav>
+
+@code {
+    /// <summary>
+    /// The tabs in display order. The tab whose address the current page starts with is shown as active.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public IReadOnlyList<GwiOSTab> Tabs { get; set; } = [];
+
+    /// <summary>
+    /// Accessible name of the navigation.
+    /// </summary>
+    [Parameter]
+    public string AriaLabel { get; set; } = "Unterbereiche";
+}

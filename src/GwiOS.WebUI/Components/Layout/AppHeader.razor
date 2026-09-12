@@ -1,0 +1,54 @@
+<header class="gwios-header">
+    <div class="gwios-header-inner">
+        <a class="gwios-brand" href="">
+            <img class="gwios-brand-logo" src="images/gwios-logo.png" alt="" width="36" height="36" />
+            <span class="gwios-brand-name">gwi-os</span>
+        </a>
+
+        <nav class="gwios-nav-desktop" aria-label="Hauptnavigation">
+            @foreach (NavigationEntry entry in NavigationEntries)
+            {
+                <NavLink class="gwios-nav-link" href="@entry.Href" Match="NavLinkMatch.Prefix">@entry.Text</NavLink>
+            }
+        </nav>
+
+        <button type="button"
+                class="gwios-burger @(_isMenuOpen ? "gwios-burger--open" : null)"
+                aria-label="Menü"
+                aria-expanded="@(_isMenuOpen ? "true" : "false")"
+                aria-controls="gwios-nav-mobile"
+                @onclick="ToggleMenu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </div>
+
+    @if (_isMenuOpen)
+    {
+        <nav id="gwios-nav-mobile" class="gwios-nav-mobile" aria-label="Hauptnavigation" @onclick="CloseMenu">
+            @foreach (NavigationEntry entry in NavigationEntries)
+            {
+                <NavLink class="gwios-nav-mobile-link" href="@entry.Href" Match="NavLinkMatch.Prefix">@entry.Text</NavLink>
+            }
+        </nav>
+    }
+</header>
+
+@code {
+    private static readonly NavigationEntry[] NavigationEntries =
+    [
+        new("ToDos", "todos"),
+        new("Admin", "admin")
+    ];
+
+    private bool _isMenuOpen;
+
+    private void ToggleMenu()
+        => _isMenuOpen = !_isMenuOpen;
+
+    private void CloseMenu()
+        => _isMenuOpen = false;
+
+    private sealed record NavigationEntry(string Text, string Href);
+}

@@ -11,7 +11,8 @@
 - [x] DI-6 in `LogEntryManager` und `DefaultLogger<T>` umgesetzt
 - [x] Unit-Tests (`tests/GwiOS.Core.Tests`): `LogEntry`, `LogEntryManager`, `DefaultLogger<T>`, `AddGwiOSCore` — 33 grün
 - [x] Integrationstests für `LogEntryPostgresRepository` — 12 grün
-- [ ] WebUI: kein Testprojekt vorhanden; `Program` (Composition Root) ist daher nicht durch Tests abgedeckt
+- [ ] WebUI: `Program` (Composition Root) ist nicht durch Tests abgedeckt (das Testprojekt `GwiOS.WebUI.Tests`
+      deckt bisher nur Komponenten, Seiten und Dienste ab)
 
 ### Entscheidungen
 
@@ -38,8 +39,8 @@
 - Integrationstests laufen in einer gemeinsamen xunit-Collection (`PostgresTestDatabase`) nacheinander. Sie verwenden
   eindeutige App-Namen und räumen ihre Daten selbst wieder weg. Die Fixture ruft `EnsureStorageCreatedAsync()` einmal
   vor allen Integrationstests auf.
-- Fixture und Collection liegen unter `tests/GwiOS.Core.Tests/TestInfrastructure/`, weil Logging- und
-  Person-Integrationstests sie teilen. Die Fixture verdrahtet wie `AddGwiOSCore`, ersetzt aber `ILogger<T>` durch
+- Fixture und Collection liegen unter `tests/GwiOS.Core.Tests/TestInfrastructure/`, weil Logging-, Person- und
+  ToDo-Integrationstests sie teilen. Die Fixture verdrahtet wie `AddGwiOSCore`, ersetzt aber `ILogger<T>` durch
   `LoggerFake<T>`, damit die Repositories unter Test keine Log-Einträge in der Test-DB hinterlassen.
 - `LoggerFake<T>` (`tests/.../CrossCutting/Logging/Contracts/`) zeichnet Log-Einträge synchron auf; damit prüfen
   Unit-Tests das Logging von Klassen mit öffentlicher Schnittstelle.
@@ -52,7 +53,8 @@
 
 ### Offene Fragen
 
-- Soll ein Testprojekt `GwiOS.WebUI.Tests` angelegt werden (R5), und was soll es für die Composition Root abdecken?
+- Was soll `GwiOS.WebUI.Tests` für die Composition Root (`Program`) abdecken? Ein Start der App braucht Datenbank und
+  Keycloak.
 
 ## Personen (GwiOS.Core/CrossCutting/Persons)
 
@@ -86,3 +88,79 @@
 
 - Sollen Name und ShortName ohne Beachtung der Groß-/Kleinschreibung eindeutig sein? Derzeit sind „Anna“ und „anna“
   zwei verschiedene Namen.
+
+## ToDos (GwiOS.Core/ToDos)
+
+- [x] `IToDoManager` / `ToDoManager`: Anlegen, Erledigen, Lesen (alle), Löschen
+- [x] `IToDoValidator` / `ToDoValidator`: Titel nicht leer
+- [x] `IToDoRepository` / `ToDoPostgresRepository` mit direktem SQL über Npgsql, inkl. `EnsureStorageCreatedAsync()`
+- [x] Exceptions: `ToDoValidationException`, `ToDoNotFoundException`
+- [x] Registrierung in `AddGwiOSCore` (inkl. `TimeProvider.System`); WebUI legt die ToDo-Tabelle beim Start an
+- [x] Unit-Tests: `ToDoManager`, `ToDoValidator`, Exceptions, `ToDo`, `AddGwiOSCore`; Integrationstests für
+      `ToDoPostgresRepository` — 48 neu (Core gesamt: 156 grün)
+
+### Entscheidungen
+
+- Tabelle `todos.todos` (Schema `todos`): `id uuid` (PK `pk_todos`), `title text`, `description text NULL`,
+  `is_completed boolean`, `due_date date NULL`, `created_at timestamptz`, `completed_at timestamptz NULL`,
+  `position integer`. `UpdateAsync` überschreibt `created_at` nicht.
+- `ToDo.DueDate` ist `DateOnly?` statt `DateTime?`: Ein Fälligkeitstag hat keine Uhrzeit und keine Zeitzone.
+  `CreatedAt`/`CompletedAt` bleiben UTC-`DateTime`.
+- ToDos werden nach `Position`, bei gleicher Position nach `CreatedAt` sortiert. Die Position setzt derzeit niemand
+  (alle 0), die Reihenfolge ist also die des Anlegens.
+- `CompleteToDoAsync` setzt `IsCompleted` und `CompletedAt` (aus dem injizierten `TimeProvider`, DI-5: Uhr hinter
+  Abstraktion) und speichert; ein nicht gespeichertes ToDo führt zu `ToDoNotFoundException`.
+- Logging wie bei Personen: Manager loggt Anlegen, Erledigen, Löschen (Information, nur `ToDoId`), Validator
+  abgelehnte ToDos, Repository fehlende ToDos beim Ändern (Warning). Titel werden nicht geloggt.
+
+### Offene Fragen
+
+- Gehören ToDos einer Person (Zuständigkeit/Ersteller) oder sind sie familienweit? Derzeit familienweit.
+- Soll die Reihenfolge per Drag & Drop änderbar sein (`Position`), und soll ein erledigtes ToDo wieder geöffnet
+  werden können?
+
+## WebUI (Design-Vorlage `docs/UI/GwiOS.WebUI.Design.html`)
+
+- [x] Theme: Design-Tokens, Schriften (Inter, Orbitron, lokal unter `wwwroot/fonts`), Logo, zentral gestylte
+      Elemente in `wwwroot/app.css`; Bootstrap wird nicht mehr eingebunden
+- [x] Layout: `MainLayout` (Hintergrund, Header, Statusleiste), `AppHeader` (Navigation, Burger-Menü unter 820 px),
+      `AdminLayout` (Admin-Tabs)
+- [x] GwiOS-Komponenten (`Components/GwiOS.Components`): `GwiOSTextBox`, `GwiOSDateBox`, `GwiOSSection`,
+      `GwiOSTabNav`, `GwiOSPillGroup`, `GwiOSConfirmButton`, `GwiOSLogLevelBadge`, `GwiOSToDoTile`,
+      `GwiOSPersonTile`, `GwiOSStatusBar`
+- [x] Seiten: `/todos` (ToDo-Übersicht), `/admin/logging` (System-Logs), `/admin/benutzer` (Benutzerverwaltung);
+      `/` und `/admin` leiten weiter
+- [x] Statusleiste mit Verlauf: `IStatusMessageService` / `StatusMessageService` (scoped je Sitzung, max. 50 Meldungen)
+- [x] Testprojekt `tests/GwiOS.WebUI.Tests` (xunit v3 + bUnit 2) — 127 grün
+- [ ] Haushaltsbuch aus der Vorlage (vorerst ausgenommen)
+
+### Entscheidungen
+
+- Razor würde aus dem Ordner `GwiOS.Components` den Namespace `GwiOS_Components` machen; nach CORE-3 setzt
+  `Components/GwiOS.Components/_Imports.razor` ihn per `@namespace` auf `GwiOS.WebUI.Components.GwiOS.Components`.
+  Weil dieser Namespace in allen Komponenten unter `GwiOS.WebUI.Components` den Wurzel-Namespace `GwiOS` verdeckt,
+  stehen die GwiOS-Usings in `Components/_Imports.razor` mit `global::`. Testklassen sprechen die Komponenten wie
+  im Core per Alias `<Komponente>UnderTest` an.
+- Das implizite `using Microsoft.Extensions.Logging` ist im WebUI-Projekt entfernt: Es machte `ILogger<T>` und
+  `LogLevel` mehrdeutig, und nur der GwiOS-Logger ist erlaubt.
+- Komponenten mit Logik haben eine Code-Behind-Datei (`.razor.cs`), reine Darstellungskomponenten einen `@code`-Block.
+  Styles einer Komponente stehen in ihrer `.razor.css`, gemeinsame Grundelemente (Eingabefeld, Schaltflächen,
+  Tabelle, Panel, Plaketten) als Klassen `gwios-*` zentral in `app.css` (Ausnahme der UI-Regeln für einfache,
+  zentral gestylte HTML-Elemente).
+- Tabellen tragen `data-label` je Zelle; unter 820 px wird jede Zeile zur Karte (wie in der Vorlage).
+- Benutzerverwaltung zeigt Personen (Kürzel-Avatar, Name, Kurzname, Konto ja/nein). Die Rollen der Vorlage
+  (Admin/Mitglied/Kind) entfallen, bis es Rollen gibt. Löschen von Personen und Log-Einträgen verlangt einen
+  zweiten Klick (`GwiOSConfirmButton`); ToDos werden wie in der Vorlage sofort gelöscht.
+- System-Logs zeigen je Anwendung (Auswahl als Pills) Zeitstempel, Level und Nachricht, neueste zuerst; dazu
+  „Aktualisieren“ und „Einträge löschen“.
+- Statusmeldungen: Grau = neutral, Blau = Erfolg, Orange = Warnung, Rot = Fehler. `StatusMessageService` loggt nur
+  das Level (Debug), nicht den Text, da er Namen enthalten kann. Seiten loggen nicht selbst; Manager, Validatoren
+  und Repositories loggen die fachlichen Vorgänge bereits.
+- Uhrzeiten werden über den injizierten `TimeProvider` in der lokalen Zeitzone des Servers angezeigt.
+
+### Offene Fragen
+
+- Sollen die Admin-Seiten auf eine Keycloak-Rolle beschränkt werden? Derzeit genügt die Anmeldung.
+- Anmeldestatus und Abmelden sind in der Vorlage nicht vorgesehen und fehlen daher im Header (`/logout` existiert).
+- Die System-Logs laden alle Einträge einer Anwendung; bei großen Mengen braucht es Paging oder Virtualisierung.
+- `wwwroot/lib/bootstrap` wird nicht mehr verwendet und kann entfernt werden.

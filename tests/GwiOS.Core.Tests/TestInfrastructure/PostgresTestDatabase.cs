@@ -2,6 +2,8 @@ using GwiOS.Core.CrossCutting.Logging.Contracts;
 using GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement.Contracts;
 using GwiOS.Core.CrossCutting.Persons.Infrastructure;
 using GwiOS.Core.Tests.CrossCutting.Logging.Contracts;
+using GwiOS.Core.ToDos.Domain.Managers.ToDoManagement.Contracts;
+using GwiOS.Core.ToDos.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GwiOS.Core.Tests.TestInfrastructure;
@@ -28,6 +30,9 @@ public sealed class PostgresTestDatabase : IAsyncLifetime
         PersonRepository = _scope.ServiceProvider.GetRequiredService<IPersonRepository>();
         PersonRepositoryLogger = (LoggerFake<PersonPostgresRepository>)_serviceProvider
             .GetRequiredService<ILogger<PersonPostgresRepository>>();
+        ToDoRepository = _scope.ServiceProvider.GetRequiredService<IToDoRepository>();
+        ToDoRepositoryLogger = (LoggerFake<ToDoPostgresRepository>)_serviceProvider
+            .GetRequiredService<ILogger<ToDoPostgresRepository>>();
     }
 
     /// <summary>
@@ -46,10 +51,22 @@ public sealed class PostgresTestDatabase : IAsyncLifetime
     /// </summary>
     internal LoggerFake<PersonPostgresRepository> PersonRepositoryLogger { get; }
 
+    /// <summary>
+    /// The ToDo repository under test, connected to the test database.
+    /// </summary>
+    public IToDoRepository ToDoRepository { get; }
+
+    /// <summary>
+    /// The logger of the ToDo repository. It keeps the entries of all tests sharing this fixture, so tests only look
+    /// at the entries of the ToDos they created themselves.
+    /// </summary>
+    internal LoggerFake<ToDoPostgresRepository> ToDoRepositoryLogger { get; }
+
     public async ValueTask InitializeAsync()
     {
         await LogEntryRepository.EnsureStorageCreatedAsync();
         await PersonRepository.EnsureStorageCreatedAsync();
+        await ToDoRepository.EnsureStorageCreatedAsync();
     }
 
     public async ValueTask DisposeAsync()

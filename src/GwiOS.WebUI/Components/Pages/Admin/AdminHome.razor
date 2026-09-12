@@ -1,0 +1,8 @@
+@page "/admin"
+@inject NavigationManager NavigationManager
+
+@code {
+    // The admin area has no overview of its own; it opens with its first tab.
+    protected override void OnInitialized()
+        => NavigationManager.NavigateTo("admin/logging", replace: true);
+}

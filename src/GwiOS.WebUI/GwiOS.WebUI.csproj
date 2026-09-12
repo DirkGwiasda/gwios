@@ -16,7 +16,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Components\GwiOS.Components\" />
+    <!-- Only the GwiOS logger may be used; the implicit using would make ILogger<T> and LogLevel ambiguous. -->
+    <Using Remove="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="GwiOS.WebUI.Tests" />
   </ItemGroup>
 
 </Project>

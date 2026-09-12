@@ -1,0 +1,58 @@
+<section class="gwios-panel gwios-section">
+    <header class="gwios-section-header">
+        <h2 class="gwios-section-title @AccentClass">@Title</h2>
+        @if (Count is not null)
+        {
+            <span class="gwios-section-count" aria-label="@($"{Count} Einträge")">@Count</span>
+        }
+    </header>
+    @if (IsEmpty)
+    {
+        <p class="gwios-empty">@EmptyText</p>
+    }
+    else
+    {
+        @ChildContent
+    }
+</section>
+
+@code {
+    /// <summary>
+    /// Title shown in the header of the section.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Number shown in a badge next to the title, or <c>null</c> to show no badge.
+    /// </summary>
+    [Parameter]
+    public int? Count { get; set; }
+
+    /// <summary>
+    /// Color of the title.
+    /// </summary>
+    [Parameter]
+    public GwiOSSectionAccent Accent { get; set; } = GwiOSSectionAccent.Primary;
+
+    /// <summary>
+    /// Whether the section has no content; then <see cref="EmptyText"/> is shown instead of the content.
+    /// </summary>
+    [Parameter]
+    public bool IsEmpty { get; set; }
+
+    /// <summary>
+    /// Text shown instead of the content while <see cref="IsEmpty"/> is set.
+    /// </summary>
+    [Parameter]
+    public string EmptyText { get; set; } = "Keine Einträge vorhanden.";
+
+    /// <summary>
+    /// The content of the section.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private string AccentClass
+        => Accent == GwiOSSectionAccent.Success ? "gwios-section-title--success" : "gwios-section-title--primary";
+}
