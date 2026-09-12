@@ -30,3 +30,6 @@ Die Ordner-Struktur der Testprojekte muss der Struktur der zu testenden Projekte
 
 ## Logging
 Für das Logging wird ausschließlich das Interface GwiOS.Core.CrossCutting.Logging.Contracts.ILogger verwendet. Die Implementierung wird über Dependency Injection bereitgestellt. Es dürfen keine eigenen Logger implementiert werden. Logging ist in allen Klassen verpflichtend, die eine öffentliche Schnittstelle haben.
+
+## UI
+Regeln für das UI werden in `docs/ui-rules.md` festgehalten. Sie sind verbindlich und müssen bei jeder Arbeit am UI beachtet werden.

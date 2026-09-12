@@ -9,6 +9,7 @@
   </Folder>
   <Folder Name="/docs/UI/">
     <File Path="../docs/UI/GwiOS.WebUI.Design.html" />
+    <File Path="../docs/UI/ui-rules.md" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="GwiOS.Core/GwiOS.Core.csproj" Id="aca45ff9-131c-4bdc-9602-f87aa9751170" />
