@@ -164,3 +164,42 @@
 - Anmeldestatus und Abmelden sind in der Vorlage nicht vorgesehen und fehlen daher im Header (`/logout` existiert).
 - Die System-Logs laden alle Einträge einer Anwendung; bei großen Mengen braucht es Paging oder Virtualisierung.
 - `wwwroot/lib/bootstrap` wird nicht mehr verwendet und kann entfernt werden.
+
+## Deployment (deploy/rpi5)
+
+- [x] `Deploy-WebUI.ps1` (Windows): Secrets lesen, Tests, arm64-Image per `dotnet publish /t:PublishContainer`
+      als Archiv bauen, per `scp` übertragen, `apply.sh` starten, auf `https://webui.gwios.gwiasda.net/` warten
+- [x] `apply.sh` (rpi5): Voraussetzungen prüfen, `.env` von stdin schreiben, Schlüsselverzeichnis anlegen,
+      Image laden, `docker compose up`, alte Images löschen (drei bleiben)
+- [x] `docker-compose.yml`: Projekt `gwios-webui`, Container `gwios-webui` im Netz `proxy`
+- [x] Image-Bau lokal geprüft (arm64, Benutzer 1654, Port 8080); Compose-Datei und `.env`-Quoting mit
+      `docker compose config` geprüft
+- [x] Erster Deploy auf den Pi (2026-09-12) — läuft unter `https://webui.gwios.gwiasda.net`
+- [x] Infrastruktur-Repo: Route `webui` in `traefik/routen.yml` aktiviert, README nachgezogen
+- [ ] Infrastruktur-Repo: `postgres-init/` um Benutzer `gwios_user` und Datenbank `gwios_db` ergänzen, damit ein
+      Neuaufbau des Pi sie wieder anlegt
+
+### Entscheidungen
+
+- Die WebUI wird ausschließlich aus diesem Repo deployt, nicht im Infrastruktur-Repo beschrieben. Eigener
+  Zielordner `/home/tija/gwios-webui`, eigenes Compose-Projekt; Verbindung zu Traefik nur über das Netz `proxy`.
+- Secrets kommen aus denselben Benutzer-Umgebungsvariablen wie in der Entwicklung (`GwiOS.DB.Connectionstring`,
+  `Keycloak__ClientSecret`), nicht aus denen der Tests, und landen nur in der `.env` auf dem Pi (chmod 600).
+  Die `.env` wird bei jedem Deploy neu geschrieben und per stdin übertragen, nie über eine Kommandozeile.
+- Die `.env` geht base64-kodiert mit SHA-256-Prüfsumme über stdin: Windows PowerShell 5.1 reichte sie beim ersten
+  Deploy als ASCII an `ssh` weiter und machte aus `§` im DB-Passwort ein `?` (Folge: „password authentication
+  failed“). Base64 ist reines ASCII; eine abweichende Prüfsumme lässt `apply.sh` ohne Änderung abbrechen.
+- Werte stehen in der `.env` in einfachen Anführungszeichen (keine Ersetzung von `$` durch Compose); Werte
+  mit `'`, `\` oder Zeilenumbruch lehnt das Skript ab (Compose macht auch dort aus `\\` ein `\`).
+- `init: true` im Compose: Als PID 1 beendet sich .NET nach einem unbehandelten Fehler nicht (beobachtet beim
+  ersten Deploy: Absturz beim DB-Login, Container blieb „running“, `restart` griff nie).
+- Postgres wird aus dem Container über den freigegebenen Port 5432 des Pi erreicht (`extra_hosts`: `rpi5` →
+  Pi), Keycloak über einen `extra_hosts`-Eintrag direkt bei Traefik auf dem Pi.
+- Data-Protection-Schlüssel liegen auf der SSD (`/mnt/ssd/gwios-webui/keys`), eingebunden am Standardpfad
+  von ASP.NET Core — keine Codeänderung nötig. `TZ=Europe/Berlin` für die Anzeige lokaler Uhrzeiten.
+- Image-Tag = kurzer Commit-Hash, bei nicht committeten Änderungen mit `-dirty`.
+
+### Offene Fragen
+
+- Skript und `apply.sh` sind nicht durch automatisierte Tests abgedeckt (R5 zielt auf .NET-Code unter
+  `tests/`); geprüft werden sie durch den Deploy selbst.

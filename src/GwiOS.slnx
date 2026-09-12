@@ -1,4 +1,11 @@
 <Solution>
+  <Folder Name="/deploy/" />
+  <Folder Name="/deploy/rpi5/">
+    <File Path="../deploy/rpi5/apply.sh" />
+    <File Path="../deploy/rpi5/Deploy-WebUI.ps1" />
+    <File Path="../deploy/rpi5/docker-compose.yml" />
+    <File Path="../deploy/rpi5/README.md" />
+  </Folder>
   <Folder Name="/docs/">
     <File Path="../CLAUDE.md" />
     <File Path="../docs/architecture.md" />

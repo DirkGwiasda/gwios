@@ -1,0 +1,66 @@
+# GwiOS WebUI auf dem rpi5.
+#
+# Deploy-WebUI.ps1 kopiert diese Datei nach /home/tija/gwios-webui und startet
+# sie dort mit "docker compose up -d". Die Werte in ${...} stehen in der .env
+# daneben, die das Skript bei jedem Deploy neu schreibt. Hintergrund und
+# Voraussetzungen: README.md in diesem Ordner.
+
+# Fester Projektname, unabhängig vom Ordnernamen auf dem Pi.
+name: gwios-webui
+
+services:
+
+  webui:
+    image: gwios-webui:${GWIOS_WEBUI_TAG:?GWIOS_WEBUI_TAG fehlt - Deploy-WebUI.ps1 ausführen}
+    # Unter diesem Namen erreicht Traefik den Container im Netz "proxy"
+    # (traefik/routen.yml im Infrastruktur-Repo).
+    container_name: gwios-webui
+    restart: unless-stopped
+    # Ein kleiner Init-Prozess als PID 1 statt der App selbst. Als PID 1
+    # beendet sich .NET nach einem unbehandelten Fehler nicht: Der Container
+    # gilt dann als laufend, obwohl die App tot ist, und "restart" greift nie.
+    init: true
+
+    environment:
+      # Traefik nimmt HTTPS an und spricht die App über HTTP an. Ohne diese
+      # Einstellung hält sie sich für eine HTTP-Seite, schickt Keycloak eine
+      # http://-Rücksprungadresse, und Keycloak lehnt die Anmeldung ab.
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      # Die App zeigt Uhrzeiten in der lokalen Zeitzone des Servers an - im
+      # Container wäre das sonst UTC.
+      TZ: Europe/Berlin
+      # Der Schlüssel heißt so, wie die App ihn in IConfiguration erwartet.
+      GwiOS.DB.Connectionstring: ${GWIOS_DB_CONNECTIONSTRING:?GWIOS_DB_CONNECTIONSTRING fehlt - Deploy-WebUI.ps1 ausführen}
+      # "__" steht in Umgebungsvariablen für den Doppelpunkt: Keycloak:ClientSecret.
+      Keycloak__ClientSecret: ${GWIOS_WEBUI_CLIENT_SECRET:?GWIOS_WEBUI_CLIENT_SECRET fehlt - Deploy-WebUI.ps1 ausführen}
+
+    extra_hosts:
+      # Postgres läuft auf demselben Pi, aber in einem anderen Compose-Projekt
+      # und Netz. Die App erreicht es über den freigegebenen Port 5432 des Pi.
+      # Der Connection String ist derselbe wie in der Entwicklung; steht dort
+      # "Host=rpi5", führt dieser Eintrag aus dem Container zum Pi.
+      - rpi5:host-gateway
+      # Keycloak muss aus dem Container unter genau der Adresse erreichbar
+      # sein, die es als Aussteller in die Tokens schreibt. So hängt das nicht
+      # am DNS der FritzBox: Der Weg führt direkt zu Traefik auf dem Pi.
+      - keycloak.gwios.gwiasda.net:host-gateway
+
+    volumes:
+      # Schlüssel, mit denen ASP.NET Core Anmelde-Cookies und Formulare
+      # schützt. Ohne dauerhafte Ablage entstehen mit jedem neuen Container
+      # neue Schlüssel, und nach jedem Deploy wären alle abgemeldet.
+      # Ausführliche Schreibweise, damit ein fehlender Ordner den Start
+      # abbricht, statt still einen leeren anzulegen - apply.sh legt ihn an.
+      - type: bind
+        source: ${GWIOS_WEBUI_KEYS_DIRECTORY:?GWIOS_WEBUI_KEYS_DIRECTORY fehlt - Deploy-WebUI.ps1 ausführen}
+        target: /home/app/.aspnet/DataProtection-Keys
+        bind:
+          create_host_path: false
+
+    networks:
+      - proxy
+
+networks:
+  # Gemeinsames Netz mit Traefik, angelegt vom Infrastruktur-Repo.
+  proxy:
+    external: true
