@@ -21,7 +21,7 @@ public sealed class DeleteByAppNameAsyncTests(PostgresTestDatabase database) : I
 
         await _database.LogEntryRepository.DeleteByAppNameAsync(_appName);
 
-        Assert.Empty(await _database.LogEntryRepository.GetAllLogEntriesByAppAsync(_appName));
+        Assert.Equal(0, await CountStoredLogEntriesAsync(_appName));
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public sealed class DeleteByAppNameAsyncTests(PostgresTestDatabase database) : I
 
         await _database.LogEntryRepository.DeleteByAppNameAsync(_appName);
 
-        Assert.Single(await _database.LogEntryRepository.GetAllLogEntriesByAppAsync(_otherAppName));
+        Assert.Equal(1, await CountStoredLogEntriesAsync(_otherAppName));
     }
 
     [Fact]
@@ -56,4 +56,7 @@ public sealed class DeleteByAppNameAsyncTests(PostgresTestDatabase database) : I
     private async Task InsertLogEntryAsync(string appName)
         => await _database.LogEntryRepository.InsertAsync(
             new LogEntry(appName, "Tests", "Message", LogLevel.Information));
+
+    private async Task<int> CountStoredLogEntriesAsync(string appName)
+        => (await _database.LogEntryRepository.GetLogEntryPageByAppAsync(appName, 1, 10)).TotalCount;
 }

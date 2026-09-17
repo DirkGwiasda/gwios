@@ -1,4 +1,4 @@
-<span class="gwios-log-level @LevelClass">@Label</span>
+<span class="gwios-log-level @LevelClass @(IsLarge ? "gwios-log-level--large" : null)">@Label</span>
 
 @code {
     /// <summary>
@@ -7,14 +7,20 @@
     [Parameter, EditorRequired]
     public LogLevel Level { get; set; }
 
+    /// <summary>
+    /// Whether the badge is shown in a larger size, such as in the header of a dialog.
+    /// </summary>
+    [Parameter]
+    public bool IsLarge { get; set; }
+
     private string Label
         => Level switch
         {
-            LogLevel.Error => "ERROR",
-            LogLevel.Warning => "WARN",
-            LogLevel.Information => "INFO",
-            LogLevel.Debug => "DEBUG",
-            _ => "NONE"
+            LogLevel.Error => "Error",
+            LogLevel.Warning => "Warning",
+            LogLevel.Information => "Information",
+            LogLevel.Debug => "Debug",
+            _ => "None"
         };
 
     private string LevelClass

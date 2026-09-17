@@ -1,0 +1,87 @@
+.gwios-satellite-token {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.gwios-satellite-token-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid rgba(255, 208, 86, 0.4);
+    border-radius: var(--gwios-radius);
+    background: rgba(255, 208, 86, 0.08);
+}
+
+.gwios-satellite-token-warning-icon {
+    flex-shrink: 0;
+    color: var(--gwios-warning);
+    font-size: 18px;
+    line-height: 1;
+}
+
+.gwios-satellite-token-warning-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--gwios-text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.gwios-satellite-token-warning-text strong {
+    color: var(--gwios-text);
+}
+
+.gwios-satellite-token-warning-title {
+    color: var(--gwios-warning);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.gwios-satellite-token-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.gwios-satellite-token-label {
+    color: var(--gwios-text-dim);
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.gwios-satellite-token-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 10px;
+}
+
+.gwios-satellite-token-value {
+    flex: 1 1 260px;
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid rgba(0, 136, 255, 0.3);
+    border-radius: 10px;
+    background: rgba(0, 136, 255, 0.06);
+    color: var(--gwios-text);
+    font-family: var(--gwios-font-mono);
+    font-size: 15px;
+    line-height: 1.6;
+    letter-spacing: 0.04em;
+    overflow-wrap: anywhere;
+    user-select: all;
+}
+
+.gwios-satellite-token-copy {
+    flex: 0 0 auto;
+    padding: 12px 20px;
+}
+
+.gwios-satellite-token-copy-error {
+    color: var(--gwios-danger);
+    font-size: 12.5px;
+}

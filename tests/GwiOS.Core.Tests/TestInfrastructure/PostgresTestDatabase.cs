@@ -1,6 +1,8 @@
 using GwiOS.Core.CrossCutting.Logging.Contracts;
 using GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement.Contracts;
 using GwiOS.Core.CrossCutting.Persons.Infrastructure;
+using GwiOS.Core.Satellites.Domain.Managers.SatelliteManagement.Contracts;
+using GwiOS.Core.Satellites.Infrastructure;
 using GwiOS.Core.Tests.CrossCutting.Logging.Contracts;
 using GwiOS.Core.ToDos.Domain.Managers.ToDoManagement.Contracts;
 using GwiOS.Core.ToDos.Infrastructure;
@@ -33,6 +35,9 @@ public sealed class PostgresTestDatabase : IAsyncLifetime
         ToDoRepository = _scope.ServiceProvider.GetRequiredService<IToDoRepository>();
         ToDoRepositoryLogger = (LoggerFake<ToDoPostgresRepository>)_serviceProvider
             .GetRequiredService<ILogger<ToDoPostgresRepository>>();
+        SatelliteRepository = _scope.ServiceProvider.GetRequiredService<ISatelliteRepository>();
+        SatelliteRepositoryLogger = (LoggerFake<SatellitePostgresRepository>)_serviceProvider
+            .GetRequiredService<ILogger<SatellitePostgresRepository>>();
     }
 
     /// <summary>
@@ -62,11 +67,23 @@ public sealed class PostgresTestDatabase : IAsyncLifetime
     /// </summary>
     internal LoggerFake<ToDoPostgresRepository> ToDoRepositoryLogger { get; }
 
+    /// <summary>
+    /// The satellite repository under test, connected to the test database.
+    /// </summary>
+    public ISatelliteRepository SatelliteRepository { get; }
+
+    /// <summary>
+    /// The logger of the satellite repository. It keeps the entries of all tests sharing this fixture, so tests only
+    /// look at the entries of the satellites they created themselves.
+    /// </summary>
+    internal LoggerFake<SatellitePostgresRepository> SatelliteRepositoryLogger { get; }
+
     public async ValueTask InitializeAsync()
     {
         await LogEntryRepository.EnsureStorageCreatedAsync();
         await PersonRepository.EnsureStorageCreatedAsync();
         await ToDoRepository.EnsureStorageCreatedAsync();
+        await SatelliteRepository.EnsureStorageCreatedAsync();
     }
 
     public async ValueTask DisposeAsync()

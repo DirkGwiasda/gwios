@@ -1,0 +1,118 @@
+@page "/admin/satelliten"
+
+<PageTitle>Satellitenverwaltung · gwi-os</PageTitle>
+
+<div class="gwios-page">
+    <div class="gwios-satellite-administration-header">
+        <h1>Satellitenverwaltung</h1>
+        <button type="button" class="gwios-button" @onclick="OpenCreateDialog">
+            <span class="gwios-button-icon" aria-hidden="true">+</span> Satellit anlegen
+        </button>
+    </div>
+    <p class="gwios-satellite-administration-intro">
+        Der Name ist die Id aus der Konfiguration des Boards und bleibt nach dem Anlegen unveränderlich. Das Token wird nur
+        einmal angezeigt.
+    </p>
+
+    @if (_entries.Count == 0)
+    {
+        <div class="gwios-panel">
+            <p class="gwios-empty">Noch keine Satelliten angelegt.</p>
+        </div>
+    }
+    else
+    {
+        <div class="gwios-tile-grid gwios-satellite-administration-grid">
+            @foreach (SatelliteOverviewEntry entry in _entries)
+            {
+                <GwiOSSatelliteAdminTile @key="entry.Satellite.Name"
+                                         Satellite="entry.Satellite"
+                                         Presence="entry.Presence"
+                                         OnEdit="() => OpenEditDialog(entry.Satellite)"
+                                         OnToggleLock="() => ToggleLockAsync(entry.Satellite)"
+                                         OnRenewToken="() => RenewTokenAsync(entry.Satellite)"
+                                         OnDelete="() => DeleteSatelliteAsync(entry.Satellite)" />
+            }
+        </div>
+    }
+</div>
+
+@if (_isCreateDialogOpen)
+{
+    <GwiOSDialog Title="Satellit anlegen" CanClose="!_isSaving" OnClose="CloseCreateDialog">
+        <ChildContent>
+            <GwiOSFormField Label="Name"
+                            InputId="satellite-create-name"
+                            IsRequired="true"
+                            Hint="Erlaubt sind a–z, 0–9 und Bindestrich, 1–32 Zeichen. Muss der Id in der Konfiguration des Boards entsprechen."
+                            ErrorMessage="@_nameError">
+                <GwiOSTextBox id="satellite-create-name"
+                              @bind-Value="_newName"
+                              @bind-Value:after="ClearNameError"
+                              Placeholder="z. B. kinderzimmer-mila"
+                              MaxLength="32"
+                              IsRequired="true"
+                              RequiredMessage="@NameRequiredMessage"
+                              ErrorMessage="@_nameError"
+                              OnEnter="CreateSatelliteAsync" />
+            </GwiOSFormField>
+            <GwiOSFormField Label="Anzeigename (optional)"
+                            InputId="satellite-create-display-name"
+                            Hint="Wird in der Übersicht angezeigt. Leer = der Name wird verwendet.">
+                <GwiOSTextBox id="satellite-create-display-name"
+                              @bind-Value="_newDisplayName"
+                              Placeholder="z. B. Kinderzimmer Mila"
+                              MaxLength="64"
+                              OnEnter="CreateSatelliteAsync" />
+            </GwiOSFormField>
+        </ChildContent>
+        <Actions>
+            <button type="button" class="gwios-button gwios-button--secondary" disabled="@_isSaving" @onclick="CloseCreateDialog">
+                Abbrechen
+            </button>
+            <button type="button" class="gwios-button" disabled="@(_isSaving || string.IsNullOrWhiteSpace(_newName))" @onclick="CreateSatelliteAsync">
+                @(_isSaving ? "Legt an …" : "Anlegen")
+            </button>
+        </Actions>
+    </GwiOSDialog>
+}
+
+@if (_editedSatellite is not null)
+{
+    <GwiOSDialog Title="Satellit bearbeiten" CanClose="!_isSaving" OnClose="CloseEditDialog">
+        <ChildContent>
+            <GwiOSReadOnlyField Label="Name"
+                                Value="@_editedSatellite.Name"
+                                Marker="fest"
+                                Hint="Der Name steht in der Konfiguration auf dem Board. Eine Änderung würde den Satelliten aussperren."
+                                IsHintWarning="true" />
+            <GwiOSFormField Label="Anzeigename" InputId="satellite-edit-display-name">
+                <GwiOSTextBox id="satellite-edit-display-name"
+                              @bind-Value="_editDisplayName"
+                              Placeholder="z. B. Kinderzimmer Mila"
+                              MaxLength="64"
+                              OnEnter="SaveSatelliteAsync" />
+            </GwiOSFormField>
+        </ChildContent>
+        <Actions>
+            <button type="button" class="gwios-button gwios-button--secondary" disabled="@_isSaving" @onclick="CloseEditDialog">
+                Abbrechen
+            </button>
+            <button type="button" class="gwios-button" disabled="@_isSaving" @onclick="SaveSatelliteAsync">
+                @(_isSaving ? "Speichert …" : "Speichern")
+            </button>
+        </Actions>
+    </GwiOSDialog>
+}
+
+@if (_shownToken is not null)
+{
+    <GwiOSDialog Title="Token" OnClose="CloseTokenDialog">
+        <ChildContent>
+            <GwiOSSatelliteTokenDetails SatelliteName="@_shownToken.SatelliteName" Token="@_shownToken.Token" />
+        </ChildContent>
+        <Actions>
+            <button type="button" class="gwios-button" @onclick="CloseTokenDialog">Schließen</button>
+        </Actions>
+    </GwiOSDialog>
+}

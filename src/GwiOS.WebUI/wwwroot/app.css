@@ -37,6 +37,7 @@
 
     --gwios-font: 'Inter', system-ui, -apple-system, sans-serif;
     --gwios-font-display: 'Orbitron', 'Inter', system-ui, sans-serif;
+    --gwios-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
     --gwios-bg: #070a0f;
     --gwios-bg-raised: #0b1220;
@@ -45,6 +46,7 @@
     --gwios-text: #e6f1ff;
     --gwios-text-muted: #b5c7e6;
     --gwios-text-dim: #7c93b3;
+    --gwios-text-faint: #546a85;
     --gwios-text-disabled: #4a5a70;
     --gwios-text-placeholder: #5a708f;
     --gwios-brand: #b0d8ff;
@@ -220,6 +222,51 @@ h1:focus {
     box-shadow: 0 0 14px rgba(255, 77, 109, 0.35);
 }
 
+/* Zurückhaltende Schaltfläche neben der Hauptaktion, z.B. "Abbrechen". */
+.gwios-button.gwios-button--secondary {
+    padding: 10px 20px;
+    border-color: var(--gwios-border);
+    background: transparent;
+    color: var(--gwios-text-muted);
+}
+
+.gwios-button.gwios-button--secondary:hover:not(:disabled) {
+    border-color: rgba(0, 136, 255, 0.45);
+    color: var(--gwios-text);
+    box-shadow: none;
+}
+
+/* Kleinere Schaltfläche für Aktionen in Kacheln, z.B. "Bearbeiten" oder "Sperren". */
+.gwios-button.gwios-button--compact {
+    padding: 7px 12px;
+    border-radius: var(--gwios-radius-small);
+    font-size: 12.5px;
+}
+
+.gwios-button.gwios-button--compact.gwios-button--secondary {
+    color: var(--gwios-text-muted);
+}
+
+.gwios-button.gwios-button--warning {
+    border-color: rgba(255, 208, 86, 0.45);
+    background: rgba(255, 208, 86, 0.1);
+    color: var(--gwios-warning);
+}
+
+.gwios-button.gwios-button--warning:hover:not(:disabled) {
+    box-shadow: 0 0 14px rgba(255, 208, 86, 0.3);
+}
+
+.gwios-button.gwios-button--success {
+    border-color: rgba(0, 255, 163, 0.45);
+    background: rgba(0, 255, 163, 0.1);
+    color: var(--gwios-success);
+}
+
+.gwios-button.gwios-button--success:hover:not(:disabled) {
+    box-shadow: 0 0 14px rgba(0, 255, 163, 0.3);
+}
+
 .gwios-button-icon {
     font-size: 1.1rem;
     line-height: 1;
@@ -246,6 +293,12 @@ h1:focus {
 .gwios-icon-button:hover {
     border-color: rgba(255, 77, 109, 0.4);
     color: var(--gwios-danger);
+}
+
+/* Schaltfläche für eine harmlose Aktion wie "Bearbeiten": leuchtet beim Überfahren blau statt rot. */
+.gwios-icon-button.gwios-icon-button--primary:hover {
+    border-color: rgba(0, 136, 255, 0.55);
+    color: var(--gwios-primary);
 }
 
 .gwios-icon-button.gwios-icon-button--success {
@@ -327,8 +380,8 @@ h1:focus {
     gap: 14px;
 }
 
-.gwios-tile-grid.gwios-tile-grid--compact {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+.gwios-tile-grid.gwios-tile-grid--wide {
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
 }
 
 .gwios-empty {
@@ -403,9 +456,54 @@ h1:focus {
 }
 
 .gwios-badge.gwios-badge--muted {
-    border-color: rgba(181, 199, 230, 0.2);
-    background: rgba(181, 199, 230, 0.06);
+    border-color: rgba(124, 147, 179, 0.25);
+    background: rgba(124, 147, 179, 0.08);
+    color: var(--gwios-text-dim);
+}
+
+.gwios-badge.gwios-badge--success {
+    border-color: rgba(0, 255, 163, 0.3);
+    background: rgba(0, 255, 163, 0.08);
+    color: var(--gwios-success);
+}
+
+.gwios-badge.gwios-badge--warning {
+    border-color: rgba(255, 208, 86, 0.35);
+    background: rgba(255, 208, 86, 0.1);
+    color: var(--gwios-warning);
+}
+
+.gwios-badge.gwios-badge--danger {
+    border-color: rgba(255, 77, 109, 0.35);
+    background: rgba(255, 77, 109, 0.1);
+    color: var(--gwios-danger);
+}
+
+/* Plakette, die auf einen Ausfall aufmerksam macht, z.B. "Offline". */
+.gwios-badge.gwios-badge--pulse {
+    animation: gwios-danger-pulse 1.8s ease-in-out infinite;
+}
+
+/* --------------------------------------------------------------------------
+   Auswahlfelder
+   -------------------------------------------------------------------------- */
+
+.gwios-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     color: var(--gwios-text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.gwios-checkbox input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--gwios-primary);
+    cursor: pointer;
 }
 
 /* --------------------------------------------------------------------------
@@ -444,7 +542,7 @@ h1:focus {
     }
 
     .gwios-tile-grid,
-    .gwios-tile-grid.gwios-tile-grid--compact {
+    .gwios-tile-grid.gwios-tile-grid--wide {
         grid-template-columns: 1fr;
     }
 

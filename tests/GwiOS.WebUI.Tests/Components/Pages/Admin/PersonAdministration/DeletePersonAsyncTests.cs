@@ -24,7 +24,7 @@ public sealed class DeletePersonAsyncTests : PersonAdministrationProbe
     }
 
     [Fact]
-    public void PublishesANeutralStatusMessage()
+    public void PublishesAWarningStatusMessage()
     {
         PersonManager.Add(new Person { Name = "Anna", ShortName = "A" });
         IRenderedComponent<PersonAdministrationUnderTest> page = RenderPage();
@@ -33,7 +33,7 @@ public sealed class DeletePersonAsyncTests : PersonAdministrationProbe
         page.Find(".gwios-icon-button--danger").Click();
 
         StatusMessage message = Assert.Single(StatusMessages.Messages);
-        Assert.Equal(StatusLevel.Neutral, message.Level);
+        Assert.Equal(StatusLevel.Warning, message.Level);
         Assert.Equal("Person „Anna“ gelöscht", message.Text);
     }
 }

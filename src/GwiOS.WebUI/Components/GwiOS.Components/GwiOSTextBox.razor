@@ -5,7 +5,7 @@
        maxlength="@MaxLength"
        aria-label="@(AriaLabel ?? Placeholder)"
        aria-invalid="@(IsInvalid ? "true" : null)"
-       title="@(IsInvalid ? RequiredMessage : null)"
+       title="@Tooltip"
        @oninput="OnInputAsync"
        @onchange="OnChangeAsync"
        @onkeydown="OnKeyDownAsync"

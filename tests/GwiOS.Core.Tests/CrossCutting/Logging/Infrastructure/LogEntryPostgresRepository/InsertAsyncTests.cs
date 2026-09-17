@@ -27,7 +27,7 @@ public sealed class InsertAsyncTests(PostgresTestDatabase database) : IAsyncLife
 
         await _database.LogEntryRepository.InsertAsync(logEntry);
 
-        List<LogEntry> storedLogEntries = await _database.LogEntryRepository.GetAllLogEntriesByAppAsync(_appName);
+        IReadOnlyList<LogEntry> storedLogEntries = await ReadStoredLogEntriesAsync();
         LogEntry storedLogEntry = Assert.Single(storedLogEntries);
         Assert.Equal(logEntry.Id, storedLogEntry.Id);
         Assert.Equal(logEntry.Timestamp, storedLogEntry.Timestamp);
@@ -46,7 +46,7 @@ public sealed class InsertAsyncTests(PostgresTestDatabase database) : IAsyncLife
 
         await _database.LogEntryRepository.InsertAsync(logEntry);
 
-        List<LogEntry> storedLogEntries = await _database.LogEntryRepository.GetAllLogEntriesByAppAsync(_appName);
+        IReadOnlyList<LogEntry> storedLogEntries = await ReadStoredLogEntriesAsync();
         LogEntry storedLogEntry = Assert.Single(storedLogEntries);
         Assert.Equal(timestamp.UtcDateTime, storedLogEntry.Timestamp.UtcDateTime);
     }
@@ -58,7 +58,7 @@ public sealed class InsertAsyncTests(PostgresTestDatabase database) : IAsyncLife
 
         await _database.LogEntryRepository.InsertAsync(logEntry);
 
-        List<LogEntry> storedLogEntries = await _database.LogEntryRepository.GetAllLogEntriesByAppAsync(_appName);
+        IReadOnlyList<LogEntry> storedLogEntries = await ReadStoredLogEntriesAsync();
         LogEntry storedLogEntry = Assert.Single(storedLogEntries);
         Assert.Empty(storedLogEntry.ContextData);
     }
@@ -68,4 +68,7 @@ public sealed class InsertAsyncTests(PostgresTestDatabase database) : IAsyncLife
 
     public async ValueTask DisposeAsync()
         => await _database.LogEntryRepository.DeleteByAppNameAsync(_appName);
+
+    private async Task<IReadOnlyList<LogEntry>> ReadStoredLogEntriesAsync()
+        => (await _database.LogEntryRepository.GetLogEntryPageByAppAsync(_appName, 1, 10)).Entries;
 }

@@ -25,10 +25,18 @@ public interface ILogEntryRepository
     Task<List<string>> GetAllAppNamesAsync();
 
     /// <summary>
-    /// Returns all log entries stored for the given application, newest first. The list is empty if the
-    /// application has no entries.
+    /// Returns one page of the log entries of all applications, newest first, together with the number of all stored
+    /// entries. <paramref name="pageNumber"/> counts from 1 and <paramref name="pageSize"/> is at least 1; a page
+    /// beyond the last entry is empty.
     /// </summary>
-    Task<List<LogEntry>> GetAllLogEntriesByAppAsync(string appName);
+    Task<LogEntryPage> GetLogEntryPageAsync(int pageNumber, int pageSize);
+
+    /// <summary>
+    /// Returns one page of the log entries of the given application, newest first, together with the number of all
+    /// entries stored for it. <paramref name="pageNumber"/> counts from 1 and <paramref name="pageSize"/> is at least
+    /// 1; a page beyond the last entry is empty.
+    /// </summary>
+    Task<LogEntryPage> GetLogEntryPageByAppAsync(string appName, int pageNumber, int pageSize);
 
     /// <summary>
     /// Deletes all log entries stored for the given application. Does nothing if the application has no entries.

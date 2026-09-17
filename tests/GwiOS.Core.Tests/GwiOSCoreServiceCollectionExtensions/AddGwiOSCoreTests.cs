@@ -6,6 +6,25 @@ using GwiOS.Core.CrossCutting.Logging.Infrastructure;
 using GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement;
 using GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement.Contracts;
 using GwiOS.Core.CrossCutting.Persons.Infrastructure;
+using GwiOS.Core.Satellites.Domain.Managers.MeasurementManagement;
+using GwiOS.Core.Satellites.Domain.Managers.MeasurementManagement.Contracts;
+using GwiOS.Core.Satellites.Domain.Managers.SatelliteCandidateManagement;
+using GwiOS.Core.Satellites.Domain.Managers.SatelliteCandidateManagement.Contracts;
+using GwiOS.Core.Satellites.Domain.Managers.SatelliteManagement;
+using GwiOS.Core.Satellites.Domain.Managers.SatelliteManagement.Contracts;
+using GwiOS.Core.Satellites.Domain.Managers.SatellitePresenceManagement;
+using GwiOS.Core.Satellites.Domain.Managers.SatellitePresenceManagement.Contracts;
+using GwiOS.Core.Satellites.Domain.Workflows.MeasurementPolling;
+using GwiOS.Core.Satellites.Domain.Workflows.MeasurementPolling.Contracts;
+using GwiOS.Core.Satellites.Domain.Workflows.SatelliteAdoption;
+using GwiOS.Core.Satellites.Domain.Workflows.SatelliteAdoption.Contracts;
+using GwiOS.Core.Satellites.Domain.Workflows.SatelliteBlocking;
+using GwiOS.Core.Satellites.Domain.Workflows.SatelliteBlocking.Contracts;
+using GwiOS.Core.Satellites.Domain.Workflows.SatelliteOverview;
+using GwiOS.Core.Satellites.Domain.Workflows.SatelliteOverview.Contracts;
+using GwiOS.Core.Satellites.Domain.Workflows.SatellitePing;
+using GwiOS.Core.Satellites.Domain.Workflows.SatellitePing.Contracts;
+using GwiOS.Core.Satellites.Infrastructure;
 using GwiOS.Core.Tests.TestInfrastructure;
 using GwiOS.Core.ToDos.Domain.Managers.ToDoManagement;
 using GwiOS.Core.ToDos.Domain.Managers.ToDoManagement.Contracts;
@@ -101,6 +120,47 @@ public sealed class AddGwiOSCoreTests : IDisposable
         IToDoManager toDoManager = _scope.ServiceProvider.GetRequiredService<IToDoManager>();
 
         Assert.IsType<ToDoManager>(toDoManager);
+    }
+
+    [Theory]
+    [InlineData(typeof(ISatelliteRepository), typeof(SatellitePostgresRepository))]
+    [InlineData(typeof(ISatelliteValidator), typeof(SatelliteValidator))]
+    [InlineData(typeof(ISatelliteTokenGenerator), typeof(SatelliteTokenGenerator))]
+    [InlineData(typeof(ISatelliteTokenProtector), typeof(SatelliteTokenProtector))]
+    [InlineData(typeof(ISatelliteManager), typeof(SatelliteManager))]
+    [InlineData(typeof(ISatellitePresenceRepository), typeof(SatellitePresenceInMemoryRepository))]
+    [InlineData(typeof(ISatellitePresenceValidator), typeof(SatellitePresenceValidator))]
+    [InlineData(typeof(ISatellitePresenceManager), typeof(SatellitePresenceManager))]
+    [InlineData(typeof(ISatelliteCandidateRepository), typeof(SatelliteCandidateInMemoryRepository))]
+    [InlineData(typeof(ISatelliteCandidateValidator), typeof(SatelliteCandidateValidator))]
+    [InlineData(typeof(ISatelliteCandidateManager), typeof(SatelliteCandidateManager))]
+    [InlineData(typeof(IMeasurementHistoryRepository), typeof(MeasurementHistoryInMemoryRepository))]
+    [InlineData(typeof(ISatelliteMeasurementClient), typeof(SatelliteMeasurementHttpClient))]
+    [InlineData(typeof(IMeasurementReadingValidator), typeof(MeasurementReadingValidator))]
+    [InlineData(typeof(IMeasurementManager), typeof(MeasurementManager))]
+    [InlineData(typeof(ISatellitePingWorkflow), typeof(SatellitePingWorkflow))]
+    [InlineData(typeof(IMeasurementPollingWorkflow), typeof(MeasurementPollingWorkflow))]
+    [InlineData(typeof(ISatelliteOverviewWorkflow), typeof(SatelliteOverviewWorkflow))]
+    [InlineData(typeof(ISatelliteAdoptionWorkflow), typeof(SatelliteAdoptionWorkflow))]
+    [InlineData(typeof(ISatelliteBlockingWorkflow), typeof(SatelliteBlockingWorkflow))]
+    public void RegistersTheSatelliteServices(Type serviceType, Type implementationType)
+    {
+        object service = _scope.ServiceProvider.GetRequiredService(serviceType);
+
+        Assert.IsType(implementationType, service);
+    }
+
+    [Theory]
+    [InlineData(typeof(ISatellitePresenceRepository))]
+    [InlineData(typeof(ISatelliteCandidateRepository))]
+    [InlineData(typeof(IMeasurementHistoryRepository))]
+    public void RegistersTheInMemoryRepositoriesOncePerApplication(Type serviceType)
+    {
+        using IServiceScope otherScope = _serviceProvider.CreateScope();
+
+        Assert.Same(
+            _scope.ServiceProvider.GetRequiredService(serviceType),
+            otherScope.ServiceProvider.GetRequiredService(serviceType));
     }
 
     [Fact]

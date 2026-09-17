@@ -13,6 +13,11 @@ namespace GwiOS.WebUI.Tests.Components.Pages.Admin.LogViewer;
 /// </summary>
 public abstract class LogViewerProbe : BunitContext
 {
+    /// <summary>
+    /// A point in time the tests write their entries at or after.
+    /// </summary>
+    protected static readonly DateTimeOffset Morning = new(2026, 7, 14, 8, 14, 5, TimeSpan.Zero);
+
     protected LogViewerProbe()
     {
         TimeProvider timeProvider = CreateTimeProvider();
@@ -38,6 +43,18 @@ public abstract class LogViewerProbe : BunitContext
         => LogEntryManager.Add(new LogEntry(appName, "Test", message, level) { Timestamp = timestamp });
 
     /// <summary>
+    /// Stores the given number of entries of the given application, one minute apart from <see cref="Morning"/> on;
+    /// their messages are the prefix followed by their number, counting from 1 for the oldest.
+    /// </summary>
+    protected void AddEntries(string appName, string messagePrefix, int count)
+    {
+        for (int number = 1; number <= count; number++)
+        {
+            AddEntry(appName, $"{messagePrefix} {number}", LogLevel.Information, Morning.AddMinutes(number));
+        }
+    }
+
+    /// <summary>
     /// Renders the page under test.
     /// </summary>
     protected IRenderedComponent<LogViewerUnderTest> RenderPage()
@@ -48,6 +65,24 @@ public abstract class LogViewerProbe : BunitContext
     /// </summary>
     protected static List<string> GetShownMessages(IRenderedComponent<LogViewerUnderTest> page)
         => [.. page.FindAll("td[data-label='Nachricht']").Select(cell => cell.TextContent)];
+
+    /// <summary>
+    /// Returns the labels of the application choices, in display order.
+    /// </summary>
+    protected static List<string> GetAppChoices(IRenderedComponent<LogViewerUnderTest> page)
+        => [.. page.FindAll(".gwios-pill").Select(pill => pill.TextContent.Trim())];
+
+    /// <summary>
+    /// Clicks the application choice with the given label.
+    /// </summary>
+    protected static void SelectApp(IRenderedComponent<LogViewerUnderTest> page, string appChoice)
+        => page.FindAll(".gwios-pill").Single(pill => pill.TextContent.Trim() == appChoice).Click();
+
+    /// <summary>
+    /// Clicks the button of the pager with the given text, such as a page number or a page size.
+    /// </summary>
+    protected static void ClickPagerButton(IRenderedComponent<LogViewerUnderTest> page, string text)
+        => page.FindAll(".gwios-pager button").First(button => button.TextContent.Trim() == text).Click();
 
     private static TimeProviderFake CreateTimeProvider()
     {

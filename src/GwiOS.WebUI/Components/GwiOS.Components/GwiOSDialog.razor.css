@@ -1,0 +1,131 @@
+.gwios-dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    background: rgba(7, 10, 15, 0.72);
+    backdrop-filter: blur(4px);
+    animation: gwios-dialog-fade-in 0.18s ease;
+}
+
+.gwios-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 71;
+    display: flex;
+    flex-direction: column;
+    width: min(640px, calc(100vw - 32px));
+    max-height: min(82vh, 760px);
+    overflow: hidden;
+    border: 1px solid rgba(0, 136, 255, 0.3);
+    border-radius: var(--gwios-radius-large);
+    background: rgba(11, 18, 32, 0.98);
+    box-shadow: 0 0 46px rgba(0, 136, 255, 0.22), 0 24px 60px rgba(0, 0, 0, 0.55);
+    transform: translate(-50%, -50%);
+    animation: gwios-dialog-in 0.22s ease;
+}
+
+.gwios-dialog:focus {
+    outline: none;
+}
+
+.gwios-dialog-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid rgba(0, 136, 255, 0.2);
+    background: linear-gradient(180deg, rgba(0, 136, 255, 0.09), rgba(0, 136, 255, 0.02));
+}
+
+.gwios-dialog-title {
+    flex: 1;
+    margin: 0;
+    color: var(--gwios-primary);
+    font-family: var(--gwios-font-display);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.gwios-dialog-close {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--gwios-border);
+    border-radius: var(--gwios-radius-small);
+    background: transparent;
+    color: var(--gwios-text-muted);
+    font-size: 15px;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.gwios-dialog-close:hover:not(:disabled) {
+    border-color: rgba(255, 77, 109, 0.45);
+    color: var(--gwios-danger);
+}
+
+.gwios-dialog-close:disabled {
+    color: var(--gwios-text-disabled);
+    cursor: not-allowed;
+}
+
+.gwios-dialog-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 18px;
+    overflow-y: auto;
+}
+
+.gwios-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 18px;
+    border-top: 1px solid rgba(0, 136, 255, 0.2);
+    background: linear-gradient(0deg, rgba(0, 136, 255, 0.06), rgba(0, 136, 255, 0.01));
+}
+
+@keyframes gwios-dialog-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes gwios-dialog-in {
+    from { opacity: 0; transform: translate(-50%, -46%) scale(0.97); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes gwios-dialog-sheet-in {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Auf schmalen Bildschirmen wird der Dialog zum Blatt, das von unten hereinfährt. */
+@media (max-width: 820px) {
+    .gwios-dialog {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        max-height: 92vh;
+        padding-bottom: env(safe-area-inset-bottom);
+        border-right: none;
+        border-bottom: none;
+        border-left: none;
+        border-radius: 18px 18px 0 0;
+        transform: none;
+        animation: gwios-dialog-sheet-in 0.24s ease;
+    }
+
+    .gwios-dialog-actions {
+        flex-direction: column-reverse;
+    }
+
+    .gwios-dialog-actions ::deep button {
+        width: 100%;
+        min-height: 44px;
+    }
+}

@@ -28,6 +28,9 @@ internal sealed class LogEntryPostgresRepository(NpgsqlDataSource dataSource) : 
 
         CREATE INDEX IF NOT EXISTS ix_log_entries_app_name_timestamp
             ON logging.log_entries (app_name, timestamp DESC);
+
+        CREATE INDEX IF NOT EXISTS ix_log_entries_timestamp
+            ON logging.log_entries (timestamp DESC);
         """;
 
     private const string InsertSql = """
@@ -41,11 +44,30 @@ internal sealed class LogEntryPostgresRepository(NpgsqlDataSource dataSource) : 
         ORDER BY app_name
         """;
 
-    private const string SelectLogEntriesByAppNameSql = """
+    private const string SelectLogEntryPageSql = """
+        SELECT id, timestamp, app_name, data_source, log_level, message, context_data
+        FROM logging.log_entries
+        ORDER BY timestamp DESC, id DESC
+        LIMIT @limit OFFSET @offset
+        """;
+
+    private const string CountLogEntriesSql = """
+        SELECT count(*)::integer
+        FROM logging.log_entries
+        """;
+
+    private const string SelectLogEntryPageByAppNameSql = """
         SELECT id, timestamp, app_name, data_source, log_level, message, context_data
         FROM logging.log_entries
         WHERE app_name = @app_name
         ORDER BY timestamp DESC, id DESC
+        LIMIT @limit OFFSET @offset
+        """;
+
+    private const string CountLogEntriesByAppNameSql = """
+        SELECT count(*)::integer
+        FROM logging.log_entries
+        WHERE app_name = @app_name
         """;
 
     private const string DeleteByAppNameSql = """
@@ -74,11 +96,22 @@ internal sealed class LogEntryPostgresRepository(NpgsqlDataSource dataSource) : 
         return await ReadAllAsync(command, reader => reader.GetString("app_name"));
     }
 
-    public async Task<List<LogEntry>> GetAllLogEntriesByAppAsync(string appName)
+    public async Task<LogEntryPage> GetLogEntryPageAsync(int pageNumber, int pageSize)
     {
-        await using NpgsqlCommand command = _dataSource.CreateCommand(SelectLogEntriesByAppNameSql);
-        command.Parameters.AddWithValue("app_name", appName);
-        return await ReadAllAsync(command, ReadLogEntry);
+        await using NpgsqlCommand selectCommand = _dataSource.CreateCommand(SelectLogEntryPageSql);
+        AddPageParameters(selectCommand, pageNumber, pageSize);
+        await using NpgsqlCommand countCommand = _dataSource.CreateCommand(CountLogEntriesSql);
+        return new LogEntryPage(await ReadAllAsync(selectCommand, ReadLogEntry), await CountAsync(countCommand));
+    }
+
+    public async Task<LogEntryPage> GetLogEntryPageByAppAsync(string appName, int pageNumber, int pageSize)
+    {
+        await using NpgsqlCommand selectCommand = _dataSource.CreateCommand(SelectLogEntryPageByAppNameSql);
+        selectCommand.Parameters.AddWithValue("app_name", appName);
+        AddPageParameters(selectCommand, pageNumber, pageSize);
+        await using NpgsqlCommand countCommand = _dataSource.CreateCommand(CountLogEntriesByAppNameSql);
+        countCommand.Parameters.AddWithValue("app_name", appName);
+        return new LogEntryPage(await ReadAllAsync(selectCommand, ReadLogEntry), await CountAsync(countCommand));
     }
 
     public async Task DeleteByAppNameAsync(string appName)
@@ -99,6 +132,16 @@ internal sealed class LogEntryPostgresRepository(NpgsqlDataSource dataSource) : 
         command.Parameters.AddWithValue("message", logEntry.Message);
         command.Parameters.AddWithValue("context_data", NpgsqlDbType.Jsonb, JsonSerializer.Serialize(logEntry.ContextData));
     }
+
+    private static void AddPageParameters(NpgsqlCommand command, int pageNumber, int pageSize)
+    {
+        command.Parameters.AddWithValue("limit", pageSize);
+        // Computed as long, so that a huge page number cannot overflow.
+        command.Parameters.AddWithValue("offset", (pageNumber - 1L) * pageSize);
+    }
+
+    private static async Task<int> CountAsync(NpgsqlCommand command)
+        => (int)(await command.ExecuteScalarAsync())!;
 
     private static async Task<List<T>> ReadAllAsync<T>(NpgsqlCommand command, Func<NpgsqlDataReader, T> readRow)
     {

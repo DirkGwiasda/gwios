@@ -16,6 +16,20 @@
     overflow-wrap: anywhere;
 }
 
+.gwios-log-row {
+    cursor: pointer;
+    transition: background 0.18s ease;
+}
+
+.gwios-log-row:hover,
+.gwios-log-row:focus-visible {
+    background: rgba(0, 136, 255, 0.09);
+}
+
+.gwios-log-row:focus-visible {
+    outline-offset: -2px;
+}
+
 @media (max-width: 820px) {
     .gwios-log-toolbar {
         flex-direction: column;

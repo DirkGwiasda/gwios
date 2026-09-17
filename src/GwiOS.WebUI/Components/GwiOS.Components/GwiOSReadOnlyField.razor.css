@@ -1,0 +1,45 @@
+.gwios-read-only-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.gwios-read-only-field-label {
+    color: var(--gwios-text-dim);
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.gwios-read-only-field-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid rgba(0, 136, 255, 0.16);
+    border-radius: var(--gwios-radius-small);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.gwios-read-only-field-value {
+    flex: 1;
+    color: var(--gwios-text-muted);
+    font-family: var(--gwios-font-mono);
+    font-size: 13.5px;
+    overflow-wrap: anywhere;
+}
+
+.gwios-read-only-field-marker {
+    flex-shrink: 0;
+    color: var(--gwios-text-faint);
+    font-size: 11.5px;
+}
+
+.gwios-read-only-field-hint {
+    color: var(--gwios-text-faint);
+    font-size: 12px;
+}
+
+.gwios-read-only-field-hint--warning {
+    color: var(--gwios-warning);
+}

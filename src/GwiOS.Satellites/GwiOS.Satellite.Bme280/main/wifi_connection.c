@@ -6,6 +6,7 @@
 #include "esp_check.h"
 #include "esp_event.h"
 #include "esp_log.h"
+#include "esp_mac.h"
 #include "esp_netif.h"
 #include "esp_timer.h"
 #include "esp_wifi.h"
@@ -72,6 +73,13 @@ static void on_wifi_event(void *argument, esp_event_base_t base, int32_t id, voi
     if (id == WIFI_EVENT_STA_START)
     {
         connect_now(NULL);
+    }
+    else if (id == WIFI_EVENT_STA_CONNECTED)
+    {
+        const wifi_event_sta_connected_t *event = data;
+
+        // In a mesh all access points share the SSID; the BSSID tells which one the satellite chose.
+        ESP_LOGI(TAG, "Associated with access point " MACSTR " on channel %u.", MAC2STR(event->bssid), event->channel);
     }
     else if (id == WIFI_EVENT_STA_DISCONNECTED)
     {
@@ -148,6 +156,10 @@ static esp_err_t configure_driver(const char *ssid, const char *password)
     strncpy((char *)config.sta.password, password, sizeof(config.sta.password) - 1);
     // Refuse to fall back to a weaker network of the same name than the one configured.
     config.sta.threshold.authmode = password[0] == '\0' ? WIFI_AUTH_OPEN : WIFI_AUTH_WPA2_PSK;
+    // A fast scan takes the first access point with the SSID, which in a mesh may be the distant router instead of the
+    // nearby repeater. Scanning all channels and picking the strongest costs about a second per connection.
+    config.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
+    config.sta.sort_method = WIFI_CONNECT_AP_BY_SIGNAL;
 
     ESP_RETURN_ON_ERROR(esp_wifi_set_mode(WIFI_MODE_STA), TAG, "Setting station mode failed");
     ESP_RETURN_ON_ERROR(esp_wifi_set_config(WIFI_IF_STA, &config), TAG, "Setting the Wi-Fi configuration failed");

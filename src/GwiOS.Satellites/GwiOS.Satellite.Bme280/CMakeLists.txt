@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 # Firmware version reported to GwiOS in every ping. Set explicitly: deriving it from git fails in the
 # VMware shared folder ("dubious ownership") and would fall back to "1".
-set(PROJECT_VER "0.1.0")
+set(PROJECT_VER "0.1.1")
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 

@@ -4,6 +4,9 @@
     Flasht Firmware und Konfiguration auf einen BME280-Satelliten.
 
 .DESCRIPTION
+    Enthält die CSV-Datei kein Token, erzeugt das Skript ein zufälliges und speichert es in der Datei. GwiOS
+    zeigt den Satelliten nach dem ersten Ping unter „Unbekannte Satelliten“ an und übernimmt das Token beim
+    Anlegen.
     Erzeugt aus der CSV-Datei des Satelliten ein NVS-Image und schreibt es zusammen mit der Firmware aus
     dist\ auf das Board. Die Firmware wird in der VM gebaut und mit export-firmware.sh nach dist\ gelegt.
     Ablauf und Voraussetzungen stehen in README.md in diesem Ordner.
@@ -54,6 +57,9 @@ Set-StrictMode -Version Latest
 $ConfigPartitionName = 'config'
 $MonitorBaud = 115200
 $NamePattern = '^[a-z0-9-]{1,32}$'
+$TokenKey = 'token'
+# 32 Zufallsbytes ergeben 43 base64url-Zeichen, innerhalb der 32 bis 128, die Satellit und GwiOS annehmen.
+$TokenByteCount = 32
 
 $DistDirectory = Join-Path $PSScriptRoot 'dist'
 $PartitionTable = Join-Path $PSScriptRoot 'partitions.csv'
@@ -104,6 +110,50 @@ function Assert-ConfigMatchesName([string] $ConfigFile)
     {
         throw "In '$ConfigFile' steht der Name '$($nameRow.value)', erwartet war '$Name'."
     }
+}
+
+function New-Token
+{
+    $bytes = New-Object byte[] $TokenByteCount
+    $generator = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    try
+    {
+        $generator.GetBytes($bytes)
+    }
+    finally
+    {
+        $generator.Dispose()
+    }
+
+    return [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+}
+
+function Add-TokenIfMissing([string] $ConfigFile)
+{
+    # Die Datei wird zeilenweise geändert statt über Export-Csv, damit Aufbau und Anführungszeichen der übrigen
+    # Zeilen erhalten bleiben.
+    $lines = [System.Collections.Generic.List[string]]([System.IO.File]::ReadAllLines($ConfigFile))
+    $tokenRow = Import-Csv -LiteralPath $ConfigFile | Where-Object { $_.key -eq $TokenKey }
+    if (($null -ne $tokenRow) -and ($tokenRow.value -ne ''))
+    {
+        return
+    }
+
+    $tokenLine = "$TokenKey,data,string,$(New-Token)"
+    $index = $lines.FindIndex({ param($line) $line.StartsWith("$TokenKey,") })
+    if ($index -ge 0)
+    {
+        $lines[$index] = $tokenLine
+    }
+    else
+    {
+        $lines.Add($tokenLine)
+    }
+
+    # Ohne BOM: Der NVS-Generator läse sonst die erste Spaltenüberschrift falsch.
+    [System.IO.File]::WriteAllLines($ConfigFile, $lines, (New-Object System.Text.UTF8Encoding $false))
+    Write-Step "Neues Token erzeugt und in '$ConfigFile' gespeichert"
+    Write-Host 'Nach dem ersten Ping erscheint der Satellit in GwiOS unter "Unbekannte Satelliten" und kann dort angelegt werden.' -ForegroundColor Yellow
 }
 
 function Get-IdfPython
@@ -204,6 +254,7 @@ function Start-Monitor([string] $Python)
 Assert-ValidName
 $configFile = Get-ConfigFile
 Assert-ConfigMatchesName $configFile
+Add-TokenIfMissing $configFile
 $python = Get-IdfPython
 $partition = Get-ConfigPartition
 

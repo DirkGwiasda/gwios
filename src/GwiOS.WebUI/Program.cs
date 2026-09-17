@@ -1,12 +1,17 @@
 using GwiOS.Core;
 using GwiOS.Core.CrossCutting.Logging.Contracts;
 using GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement.Contracts;
+using GwiOS.Core.Satellites.Domain.Managers.SatelliteManagement.Contracts;
 using GwiOS.Core.ToDos.Domain.Managers.ToDoManagement.Contracts;
+using GwiOS.WebUI.Api.Satellites;
+using GwiOS.WebUI.Api.Satellites.Contracts;
+using GwiOS.WebUI.BackgroundServices;
 using GwiOS.WebUI.Components;
 using GwiOS.WebUI.StatusMessages;
 using GwiOS.WebUI.StatusMessages.Contracts;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
 namespace GwiOS.WebUI;
@@ -14,6 +19,10 @@ namespace GwiOS.WebUI;
 public class Program
 {
     private const string GwiOSConnectionStringVariableName = "GwiOS.DB.Connectionstring";
+    private const string ApiPathPrefix = "/api";
+
+    // A ping body is well below 1 KB; larger requests are rejected before they are read.
+    private const long MaxSatellitePingBodyBytes = 4096;
 
     public static async Task Main(string[] args)
     {
@@ -25,6 +34,10 @@ public class Program
         builder.Services.AddGwiOSCore(GetGwiOSConnectionString(builder.Configuration));
         // Scoped, so every circuit and thus every user session has status messages of its own.
         builder.Services.AddScoped<IStatusMessageService, StatusMessageService>();
+        builder.Services.AddScoped<ISatellitePingEndpoint, SatellitePingEndpoint>();
+        builder.Services.Configure<MeasurementPollingOptions>(
+            builder.Configuration.GetSection(MeasurementPollingOptions.SectionName));
+        builder.Services.AddHostedService<MeasurementPollingService>();
 
         builder.Services.AddAuthentication(options =>
         {
@@ -65,7 +78,10 @@ public class Program
             app.UseHsts();
         }
 
-        app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+        // The API answers with status codes for machines; the not-found page would demand a sign-in and redirect.
+        app.UseWhen(
+            context => !context.Request.Path.StartsWithSegments(ApiPathPrefix),
+            branch => branch.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true));
         app.UseHttpsRedirection();
 
         app.UseAntiforgery();
@@ -75,12 +91,24 @@ public class Program
         app.MapGet("/login", () => Results.Challenge(new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/" }, [OpenIdConnectDefaults.AuthenticationScheme]));
         app.MapGet("/logout", () => Results.SignOut(new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/" }, [CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme]));
 
+        MapSatelliteApi(app);
         app.MapStaticAssets();
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
 
         await app.RunAsync();
     }
+
+    // Satellites authenticate with their token, not with the sign-in of users, so the API allows anonymous requests
+    // and checks the token itself.
+    private static void MapSatelliteApi(WebApplication app)
+        => app.MapPost(
+                $"{ApiPathPrefix}/satellites/{{name}}/ping",
+                (string name, HttpRequest request, ISatellitePingEndpoint endpoint, CancellationToken cancellationToken)
+                    => endpoint.HandleAsync(name, request, cancellationToken))
+            .AllowAnonymous()
+            .DisableAntiforgery()
+            .WithMetadata(new RequestSizeLimitAttribute(MaxSatellitePingBodyBytes));
 
     // Environment variables are part of the configuration; their names are used as keys unchanged.
     private static string GetGwiOSConnectionString(IConfiguration configuration)
@@ -99,5 +127,7 @@ public class Program
         await personRepository.EnsureStorageCreatedAsync();
         IToDoRepository toDoRepository = scope.ServiceProvider.GetRequiredService<IToDoRepository>();
         await toDoRepository.EnsureStorageCreatedAsync();
+        ISatelliteRepository satelliteRepository = scope.ServiceProvider.GetRequiredService<ISatelliteRepository>();
+        await satelliteRepository.EnsureStorageCreatedAsync();
     }
 }

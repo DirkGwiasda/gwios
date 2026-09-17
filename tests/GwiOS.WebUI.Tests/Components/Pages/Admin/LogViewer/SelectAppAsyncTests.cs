@@ -9,15 +9,39 @@ namespace GwiOS.WebUI.Tests.Components.Pages.Admin.LogViewer;
 public sealed class SelectAppAsyncTests : LogViewerProbe
 {
     [Fact]
-    public void ShowsTheEntriesOfTheChosenApplication()
+    public void ShowsOnlyTheEntriesOfTheChosenApplication()
     {
-        DateTimeOffset timestamp = new(2026, 7, 14, 8, 0, 0, TimeSpan.Zero);
-        AddEntry("Backup", "Gesichert", LogLevel.Information, timestamp);
-        AddEntry("GwiOS", "Gestartet", LogLevel.Information, timestamp);
+        AddEntry("Backup", "Gesichert", LogLevel.Information, Morning);
+        AddEntry("GwiOS", "Gestartet", LogLevel.Information, Morning);
         IRenderedComponent<LogViewerUnderTest> page = RenderPage();
 
-        page.FindAll(".gwios-pill")[1].Click();
+        SelectApp(page, "GwiOS");
 
         Assert.Equal(["Gestartet"], GetShownMessages(page));
+    }
+
+    [Fact]
+    public void ShowsTheEntriesOfAllApplicationsAgain_WhenAllIsChosen()
+    {
+        AddEntry("Backup", "Gesichert", LogLevel.Information, Morning);
+        AddEntry("GwiOS", "Gestartet", LogLevel.Information, Morning.AddMinutes(1));
+        IRenderedComponent<LogViewerUnderTest> page = RenderPage();
+        SelectApp(page, "GwiOS");
+
+        SelectApp(page, "Alle");
+
+        Assert.Equal(["Gestartet", "Gesichert"], GetShownMessages(page));
+    }
+
+    [Fact]
+    public void ShowsTheFirstPageOfTheChosenApplication()
+    {
+        AddEntries("GwiOS", "Eintrag", 12);
+        IRenderedComponent<LogViewerUnderTest> page = RenderPage();
+        ClickPagerButton(page, "2");
+
+        SelectApp(page, "GwiOS");
+
+        Assert.Equal("Eintrag 12", GetShownMessages(page)[0]);
     }
 }

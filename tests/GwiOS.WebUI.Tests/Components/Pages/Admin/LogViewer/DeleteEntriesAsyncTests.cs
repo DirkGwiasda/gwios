@@ -9,13 +9,12 @@ namespace GwiOS.WebUI.Tests.Components.Pages.Admin.LogViewer;
 /// </summary>
 public sealed class DeleteEntriesAsyncTests : LogViewerProbe
 {
-    private readonly DateTimeOffset _timestamp = new(2026, 7, 14, 8, 0, 0, TimeSpan.Zero);
-
     [Fact]
     public void DeletesNothing_OnTheFirstClick()
     {
-        AddEntry("Backup", "Gesichert", LogLevel.Information, _timestamp);
+        AddEntry("Backup", "Gesichert", LogLevel.Information, Morning);
         IRenderedComponent<LogViewerUnderTest> page = RenderPage();
+        SelectApp(page, "Backup");
 
         ClickDeleteButton(page);
 
@@ -24,38 +23,43 @@ public sealed class DeleteEntriesAsyncTests : LogViewerProbe
     }
 
     [Fact]
-    public void DeletesOnlyTheEntriesOfTheSelectedApplicationAndSelectsTheNextOne_WhenConfirmed()
+    public void DeletesOnlyTheEntriesOfTheSelectedApplicationAndShowsAllApplications_WhenConfirmed()
     {
-        AddEntry("Backup", "Gesichert", LogLevel.Information, _timestamp);
-        AddEntry("GwiOS", "Gestartet", LogLevel.Information, _timestamp);
+        AddEntry("Backup", "Gesichert", LogLevel.Information, Morning);
+        AddEntry("GwiOS", "Gestartet", LogLevel.Information, Morning);
         IRenderedComponent<LogViewerUnderTest> page = RenderPage();
+        SelectApp(page, "Backup");
 
         ClickDeleteButton(page);
         ClickDeleteButton(page);
 
         Assert.Equal(0, LogEntryManager.CountEntries("Backup"));
         Assert.Equal(1, LogEntryManager.CountEntries("GwiOS"));
-        Assert.Equal(["GwiOS"], page.FindAll(".gwios-pill").Select(pill => pill.TextContent.Trim()));
+        Assert.Equal(["Alle", "GwiOS"], GetAppChoices(page));
+        Assert.Equal("true", page.Find(".gwios-pill").GetAttribute("aria-pressed"));
         Assert.Equal(["Gestartet"], GetShownMessages(page));
     }
 
     [Fact]
     public void ShowsTheEmptyText_WhenTheLastApplicationWasDeleted()
     {
-        AddEntry("Backup", "Gesichert", LogLevel.Information, _timestamp);
+        AddEntry("Backup", "Gesichert", LogLevel.Information, Morning);
         IRenderedComponent<LogViewerUnderTest> page = RenderPage();
+        SelectApp(page, "Backup");
 
         ClickDeleteButton(page);
         ClickDeleteButton(page);
 
-        Assert.Equal("Keine Log-Einträge vorhanden.", page.Find(".gwios-empty").TextContent);
+        Assert.Equal(["Alle"], GetAppChoices(page));
+        Assert.Equal("Keine Log-Einträge für diese Auswahl.", page.Find(".gwios-empty").TextContent);
     }
 
     [Fact]
     public void PublishesANeutralStatusMessage()
     {
-        AddEntry("Backup", "Gesichert", LogLevel.Information, _timestamp);
+        AddEntry("Backup", "Gesichert", LogLevel.Information, Morning);
         IRenderedComponent<LogViewerUnderTest> page = RenderPage();
+        SelectApp(page, "Backup");
 
         ClickDeleteButton(page);
         ClickDeleteButton(page);

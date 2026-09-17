@@ -6,7 +6,8 @@ namespace GwiOS.WebUI.Tests.TestInfrastructure;
 
 /// <summary>
 /// Stands in for <see cref="IPersonManager"/> by keeping persons in memory, ordered by name. Like the real manager it
-/// rejects a new person whose name or short name is already used, but it does not validate.
+/// rejects a person whose name, short name or identity user ID is already used by another person and an update of a
+/// person that is not stored, but it does not validate. An update can be held back to observe the page while it saves.
 /// </summary>
 public sealed class PersonManagerFake : IPersonManager
 {
@@ -19,10 +20,21 @@ public sealed class PersonManagerFake : IPersonManager
         => [.. _persons.OrderBy(person => person.Name, StringComparer.Ordinal)];
 
     /// <summary>
+    /// Task every update waits for before it stores the person; already completed unless a test holds updates back.
+    /// </summary>
+    public Task UpdateReleased { get; set; } = Task.CompletedTask;
+
+    /// <summary>
     /// Stores the given person directly, as if it had been created before the test.
     /// </summary>
     public void Add(Person person)
         => _persons.Add(person);
+
+    /// <summary>
+    /// Deletes the given person directly, as if someone else had deleted it.
+    /// </summary>
+    public void Remove(Person person)
+        => _persons.RemoveAll(storedPerson => storedPerson.Id == person.Id);
 
     public Task<Person> CreatePersonAsync(Person person, CancellationToken cancellationToken = default)
     {
@@ -31,8 +43,18 @@ public sealed class PersonManagerFake : IPersonManager
         return Task.FromResult(person);
     }
 
-    public Task UpdatePersonAsync(Person person, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("The WebUI does not update persons yet.");
+    public async Task UpdatePersonAsync(Person person, CancellationToken cancellationToken = default)
+    {
+        await UpdateReleased;
+        int index = _persons.FindIndex(storedPerson => storedPerson.Id == person.Id);
+        if (index < 0)
+        {
+            throw new PersonNotFoundException(person.Id);
+        }
+
+        ThrowIfDuplicate(person);
+        _persons[index] = person;
+    }
 
     public Task<List<Person>> GetAllPersonsAsync(CancellationToken cancellationToken = default)
         => Task.FromResult(Persons.ToList());
@@ -50,14 +72,21 @@ public sealed class PersonManagerFake : IPersonManager
 
     private void ThrowIfDuplicate(Person person)
     {
-        if (_persons.Any(storedPerson => storedPerson.Name == person.Name))
+        List<Person> otherPersons = [.. _persons.Where(storedPerson => storedPerson.Id != person.Id)];
+        if (otherPersons.Any(otherPerson => otherPerson.Name == person.Name))
         {
             throw CreateDuplicateException(person, nameof(Person.Name));
         }
 
-        if (_persons.Any(storedPerson => storedPerson.ShortName == person.ShortName))
+        if (otherPersons.Any(otherPerson => otherPerson.ShortName == person.ShortName))
         {
             throw CreateDuplicateException(person, nameof(Person.ShortName));
+        }
+
+        if ((person.IdentityUserId is not null)
+            && otherPersons.Any(otherPerson => otherPerson.IdentityUserId == person.IdentityUserId))
+        {
+            throw CreateDuplicateException(person, nameof(Person.IdentityUserId));
         }
     }
 

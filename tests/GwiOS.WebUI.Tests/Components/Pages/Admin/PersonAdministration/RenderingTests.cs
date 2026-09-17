@@ -29,10 +29,9 @@ public sealed class RenderingTests : PersonAdministrationProbe
 
     [Theory]
     [InlineData("", "")]
-    [InlineData("Anna", "")]
     [InlineData("", "A")]
-    [InlineData("Anna", "   ")]
-    public void DisablesTheAddButton_WhileNameOrShortNameIsMissing(string name, string shortName)
+    [InlineData("   ", "A")]
+    public void DisablesTheAddButton_WhileTheNameIsMissing(string name, string shortName)
     {
         IRenderedComponent<PersonAdministrationUnderTest> page = RenderPage();
 
@@ -40,5 +39,25 @@ public sealed class RenderingTests : PersonAdministrationProbe
         page.Find("input[aria-label='Kurzname der neuen Person']").Input(shortName);
 
         Assert.True(page.Find(".gwios-form-panel button").HasAttribute("disabled"));
+    }
+
+    [Fact]
+    public void EnablesTheAddButton_WhenOnlyTheNameIsEntered()
+    {
+        IRenderedComponent<PersonAdministrationUnderTest> page = RenderPage();
+
+        page.Find("input[aria-label='Name der neuen Person']").Input("Anna");
+
+        Assert.False(page.Find(".gwios-form-panel button").HasAttribute("disabled"));
+    }
+
+    [Fact]
+    public void ShowsNoDialog_BeforeAPersonIsEdited()
+    {
+        PersonManager.Add(new Person { Name = "Anna", ShortName = "A" });
+
+        IRenderedComponent<PersonAdministrationUnderTest> page = RenderPage();
+
+        Assert.Empty(page.FindAll("[role='dialog']"));
     }
 }

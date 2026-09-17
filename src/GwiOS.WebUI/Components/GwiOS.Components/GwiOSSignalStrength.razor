@@ -1,0 +1,28 @@
+<span class="gwios-signal @(IsActive ? "gwios-signal--active" : null)"
+      role="img"
+      aria-label="@($"Signalstärke {ActiveBarCount} von {BarCount}")">
+    @for (int bar = 1; bar <= BarCount; bar++)
+    {
+        <span class="gwios-signal-bar gwios-signal-bar--@bar @(IsActive && bar <= ActiveBarCount ? "gwios-signal-bar--on" : null)"></span>
+    }
+</span>
+
+@code {
+    private const int BarCount = 4;
+
+    /// <summary>
+    /// The WLAN signal strength in dBm; closer to 0 is stronger.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public int RssiDbm { get; set; }
+
+    /// <summary>
+    /// Whether the strength is current. An inactive indicator shows all bars dimmed.
+    /// </summary>
+    [Parameter]
+    public bool IsActive { get; set; } = true;
+
+    // As in the design template: -90 dBm and weaker give one bar, -57 dBm and stronger give four.
+    private int ActiveBarCount
+        => Math.Clamp((int)Math.Round((RssiDbm + 90) / 11.0, MidpointRounding.AwayFromZero), 1, BarCount);
+}

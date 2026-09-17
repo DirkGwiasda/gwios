@@ -58,12 +58,12 @@ Dateien enthalten Token und WLAN-Passwort und gehören deshalb nicht ins Repo. V
 | `wifi_password` | leer (offenes WLAN) oder 8–63 druckbare ASCII-Zeichen |
 | `gwios_url` | beginnt mit `https://`, ohne `/` am Ende, höchstens 128 Zeichen |
 
-Enthält ein Wert ein Komma, muss er in doppelte Anführungszeichen. Solange GwiOS noch keine Tokens
-ausgibt, erzeugt diese PowerShell-Zeile ein passendes zufälliges Token:
+Enthält ein Wert ein Komma, muss er in doppelte Anführungszeichen.
 
-```
-$b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b).TrimEnd('=').Replace('+','-').Replace('/','_')
-```
+Das Token kann leer bleiben (`token,data,string,`). Dann erzeugt `Flash-Satellite.ps1` ein zufälliges Token
+und speichert es in der CSV-Datei. Nach dem ersten Ping zeigt GwiOS den Satelliten auf der Seite „Satelliten“
+unter „Unbekannte Satelliten“; „Anlegen“ übernimmt dort das Token. Alternativ legt man den Satelliten in GwiOS
+unter „Admin → Satelliten“ an und trägt das dort einmal angezeigte Token in die CSV-Datei ein.
 
 Die Konfiguration liegt in einer eigenen Partition `config` (siehe `partitions.csv`). Neue Firmware
 überschreibt sie nicht, und eine neue Konfiguration lässt die Daten des WLAN-Treibers in `nvs` unberührt.

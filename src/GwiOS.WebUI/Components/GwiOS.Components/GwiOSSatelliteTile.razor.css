@@ -1,0 +1,248 @@
+.gwios-satellite-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid var(--gwios-border);
+    border-radius: var(--gwios-radius);
+    background: var(--gwios-surface-tile);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gwios-satellite-tile--offline {
+    background: rgba(255, 255, 255, 0.02);
+    opacity: 0.7;
+}
+
+.gwios-satellite-tile-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.gwios-satellite-names {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.gwios-satellite-title {
+    color: var(--gwios-text);
+    font-family: var(--gwios-font-display);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.gwios-satellite-subtitle {
+    color: var(--gwios-text-dim);
+    font-size: 11.5px;
+}
+
+.gwios-satellite-state {
+    display: flex;
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+.gwios-satellite-stamp {
+    color: var(--gwios-text-dim);
+    font-size: 11.5px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.gwios-satellite-tile--offline .gwios-satellite-stamp {
+    color: var(--gwios-danger);
+}
+
+/* Die Temperatur bestimmt die Farbe von Wert und Verlauf. */
+.gwios-satellite-temperature {
+    --gwios-satellite-heat: var(--gwios-text-dim);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px;
+    min-width: 0;
+}
+
+.gwios-satellite-heat--hot {
+    --gwios-satellite-heat: var(--gwios-danger);
+}
+
+.gwios-satellite-heat--warm {
+    --gwios-satellite-heat: var(--gwios-warning);
+}
+
+.gwios-satellite-heat--comfortable {
+    --gwios-satellite-heat: var(--gwios-success);
+}
+
+.gwios-satellite-heat--cold {
+    --gwios-satellite-heat: var(--gwios-primary);
+}
+
+.gwios-satellite-temperature-value {
+    color: var(--gwios-satellite-heat);
+    font-family: var(--gwios-font-display);
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1;
+    text-shadow: 0 0 20px color-mix(in srgb, var(--gwios-satellite-heat) 40%, transparent);
+}
+
+.gwios-satellite-heat--none .gwios-satellite-temperature-value {
+    opacity: 0.45;
+    text-shadow: none;
+}
+
+.gwios-satellite-temperature-caption {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding-bottom: 6px;
+}
+
+.gwios-satellite-caption {
+    color: var(--gwios-text-dim);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.gwios-satellite-trend {
+    font-size: 12px;
+}
+
+.gwios-satellite-trend--up {
+    color: var(--gwios-warning);
+}
+
+.gwios-satellite-trend--down {
+    color: var(--gwios-primary);
+}
+
+.gwios-satellite-trend--flat {
+    color: var(--gwios-text-dim);
+}
+
+.gwios-satellite-trend--none {
+    color: var(--gwios-text-faint);
+}
+
+.gwios-satellite-spark {
+    display: flex;
+    flex-shrink: 0;
+    align-items: flex-end;
+    gap: 3px;
+    height: 32px;
+    margin-left: auto;
+}
+
+.gwios-satellite-spark-bar {
+    display: block;
+    width: 4px;
+    border-radius: 2px;
+    background: var(--gwios-satellite-heat);
+}
+
+.gwios-satellite-heat--none .gwios-satellite-spark-bar {
+    background: rgba(124, 147, 179, 0.3);
+    opacity: 1 !important;
+}
+
+.gwios-satellite-gauges {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.gwios-satellite-gauge {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+    border: 1px solid rgba(0, 136, 255, 0.18);
+    border-radius: 10px;
+    background: rgba(0, 136, 255, 0.05);
+}
+
+.gwios-satellite-gauge-caption {
+    color: var(--gwios-text-dim);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.gwios-satellite-gauge-value {
+    font-family: var(--gwios-font-display);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.gwios-satellite-gauge--humidity .gwios-satellite-gauge-value {
+    color: var(--gwios-success);
+}
+
+/* Razor entfernt den Leerraum vor dem Element, deshalb hält der Abstand zur Prozentzahl hier. */
+.gwios-satellite-gauge-extra {
+    margin-left: 6px;
+    color: var(--gwios-text-dim);
+    font-family: var(--gwios-font);
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.gwios-satellite-gauge--pressure .gwios-satellite-gauge-value {
+    color: var(--gwios-warning);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.gwios-satellite-gauge-track {
+    height: 5px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.gwios-satellite-gauge-fill {
+    display: block;
+    height: 100%;
+}
+
+.gwios-satellite-gauge--humidity .gwios-satellite-gauge-fill {
+    background: linear-gradient(90deg, #00ffa3, #00b377);
+}
+
+.gwios-satellite-gauge--pressure .gwios-satellite-gauge-fill {
+    background: linear-gradient(90deg, #ffd056, #c99a1e);
+}
+
+.gwios-satellite-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(0, 136, 255, 0.14);
+}
+
+.gwios-satellite-network {
+    color: var(--gwios-text-dim);
+    font-size: 11.5px;
+}
+
+.gwios-satellite-seen {
+    margin-left: auto;
+    color: var(--gwios-text-faint);
+    font-size: 11.5px;
+    white-space: nowrap;
+}

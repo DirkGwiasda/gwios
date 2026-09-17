@@ -4,8 +4,8 @@ using GwiOS.Core.CrossCutting.Logging.Domain.Contracts.Models;
 namespace GwiOS.Core.Tests.CrossCutting.Logging.Contracts;
 
 /// <summary>
-/// Stands in for <see cref="ILogEntryRepository"/> by keeping log entries in memory. It orders and filters like the
-/// real repository and lets a test wait for the first insert, which callers may perform on another thread.
+/// Stands in for <see cref="ILogEntryRepository"/> by keeping log entries in memory. It orders, filters and pages like
+/// the real repository and lets a test wait for the first insert, which callers may perform on another thread.
 /// </summary>
 public sealed class LogEntryRepositoryFake : ILogEntryRepository
 {
@@ -44,12 +44,20 @@ public sealed class LogEntryRepositoryFake : ILogEntryRepository
         }
     }
 
-    public Task<List<LogEntry>> GetAllLogEntriesByAppAsync(string appName)
+    public Task<LogEntryPage> GetLogEntryPageAsync(int pageNumber, int pageSize)
+    {
+        lock (_entriesLock)
+        {
+            return Task.FromResult(CreatePage(_entries, pageNumber, pageSize));
+        }
+    }
+
+    public Task<LogEntryPage> GetLogEntryPageByAppAsync(string appName, int pageNumber, int pageSize)
     {
         lock (_entriesLock)
         {
             return Task.FromResult(
-                _entries.Where(entry => entry.AppName == appName).OrderByDescending(entry => entry.Timestamp).ToList());
+                CreatePage([.. _entries.Where(entry => entry.AppName == appName)], pageNumber, pageSize));
         }
     }
 
@@ -62,4 +70,13 @@ public sealed class LogEntryRepositoryFake : ILogEntryRepository
 
         return Task.CompletedTask;
     }
+
+    private static LogEntryPage CreatePage(List<LogEntry> entries, int pageNumber, int pageSize)
+        => new(
+            [.. entries
+                .OrderByDescending(entry => entry.Timestamp)
+                .ThenByDescending(entry => entry.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)],
+            entries.Count);
 }

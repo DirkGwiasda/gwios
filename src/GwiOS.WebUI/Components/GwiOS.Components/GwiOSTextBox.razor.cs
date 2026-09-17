@@ -5,8 +5,8 @@ namespace GwiOS.WebUI.Components.GwiOS.Components;
 
 /// <summary>
 /// Single-line text input in the GwiOS style. It reports every keystroke through <see cref="ValueChanged"/>, trims
-/// the text when the user leaves the field, flags a required but empty field once the user has left it, submits with
-/// Enter and clears the text with Escape.
+/// the text when the user leaves the field, flags a required but empty field once the user has left it as well as an
+/// error found outside the field, submits with Enter and clears the text with Escape.
 /// </summary>
 public partial class GwiOSTextBox
 {
@@ -61,6 +61,13 @@ public partial class GwiOSTextBox
     public string RequiredMessage { get; set; } = "Bitte einen Wert eingeben.";
 
     /// <summary>
+    /// Error found by a check outside the field, such as a value that is already used, or <c>null</c> if there is
+    /// none. While set, the field is flagged as invalid and shows the error as tooltip.
+    /// </summary>
+    [Parameter]
+    public string? ErrorMessage { get; set; }
+
+    /// <summary>
     /// Additional CSS classes for the input element, or <c>null</c> for none.
     /// </summary>
     [Parameter]
@@ -73,7 +80,13 @@ public partial class GwiOSTextBox
     public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
 
     private bool IsInvalid
+        => (ErrorMessage is not null) || IsMissingRequiredValue;
+
+    private bool IsMissingRequiredValue
         => IsRequired && _isTouched && string.IsNullOrWhiteSpace(Value);
+
+    private string? Tooltip
+        => ErrorMessage ?? (IsMissingRequiredValue ? RequiredMessage : null);
 
     private async Task OnInputAsync(ChangeEventArgs eventArgs)
         => await UpdateValueAsync(eventArgs.Value?.ToString() ?? string.Empty);

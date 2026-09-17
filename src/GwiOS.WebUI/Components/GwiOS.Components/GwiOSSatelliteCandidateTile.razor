@@ -1,0 +1,87 @@
+<article class="gwios-satellite-candidate-tile">
+    <div class="gwios-satellite-candidate-header">
+        <div class="gwios-satellite-candidate-names">
+            <span class="gwios-satellite-candidate-name">@Candidate.Name</span>
+            <span class="gwios-satellite-candidate-board">@Candidate.Board · Firmware @Candidate.Firmware</span>
+        </div>
+        @if (Candidate.HasTokenChanged)
+        {
+            <span class="gwios-badge gwios-badge--danger">Token wechselt</span>
+        }
+        else
+        {
+            <span class="gwios-badge gwios-badge--warning">Unbekannt</span>
+        }
+    </div>
+
+    <dl class="gwios-satellite-candidate-facts">
+        <dt>Adresse</dt>
+        <dd>@Host</dd>
+        <dt>Signal</dt>
+        <dd class="gwios-satellite-candidate-signal">
+            <GwiOSSignalStrength RssiDbm="Candidate.WifiRssiDbm" />
+            @Candidate.WifiRssiDbm dBm
+        </dd>
+        <dt>Erster Ping</dt>
+        <dd><GwiOSTimestamp Value="ToUtcOffset(Candidate.FirstPingAt)" /></dd>
+        <dt>Letzter Ping</dt>
+        <dd><GwiOSTimeAgo Value="Candidate.LastPingAt" Now="Now" /></dd>
+    </dl>
+
+    @if (Candidate.HasTokenChanged)
+    {
+        <p class="gwios-satellite-candidate-warning" role="alert">
+            Unter diesem Namen melden sich mehrere Absender mit verschiedenen Tokens. Anlegen ist deshalb gesperrt.
+        </p>
+    }
+
+    <div class="gwios-satellite-candidate-actions">
+        <button type="button"
+                class="gwios-button gwios-button--compact"
+                title="@($"„{Candidate.Name}“ mit seinem Token anlegen")"
+                disabled="@Candidate.HasTokenChanged"
+                @onclick="OnAdopt">
+            Anlegen
+        </button>
+        <GwiOSConfirmButton Title="@($"„{Candidate.Name}“ blockieren")"
+                            ConfirmText="Sicher?"
+                            ConfirmTitle="Zum Bestätigen erneut klicken"
+                            CssClass="gwios-button gwios-button--compact gwios-button--secondary"
+                            ConfirmCssClass="gwios-button gwios-button--compact gwios-button--danger"
+                            OnConfirmed="OnBlock">
+            Blockieren
+        </GwiOSConfirmButton>
+    </div>
+</article>
+
+@code {
+    /// <summary>
+    /// The unknown satellite the tile shows.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public SatelliteCandidate Candidate { get; set; } = default!;
+
+    /// <summary>
+    /// The current point in time, in UTC, which the age of the latest ping is measured against.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public DateTime Now { get; set; }
+
+    /// <summary>
+    /// Raised when the user wants to register the satellite with the token it pinged with.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnAdopt { get; set; }
+
+    /// <summary>
+    /// Raised when the user blocks the satellite and confirms it with a second click.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnBlock { get; set; }
+
+    private string Host
+        => Uri.TryCreate(Candidate.Endpoint, UriKind.Absolute, out Uri? uri) ? uri.Host : Candidate.Endpoint;
+
+    private static DateTimeOffset ToUtcOffset(DateTime utcDateTime)
+        => new(DateTime.SpecifyKind(utcDateTime, DateTimeKind.Utc));
+}

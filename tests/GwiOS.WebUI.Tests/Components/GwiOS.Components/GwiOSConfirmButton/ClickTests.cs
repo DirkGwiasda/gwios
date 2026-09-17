@@ -36,6 +36,21 @@ public sealed class ClickTests : BunitContext
     }
 
     [Fact]
+    public void UsesTheConfirmTitleAsTooltip_WhileWaitingForConfirmation()
+    {
+        IRenderedComponent<GwiOSConfirmButtonUnderTest> button = Render<GwiOSConfirmButtonUnderTest>(parameters => parameters
+            .Add(component => component.ConfirmText, "Sicher?")
+            .Add(component => component.ConfirmTitle, "Zum Bestätigen erneut klicken"));
+
+        button.Find("button").Click();
+
+        IElement element = button.Find("button");
+        Assert.Equal("Sicher?", element.TextContent.Trim());
+        Assert.Equal("Zum Bestätigen erneut klicken", element.GetAttribute("title"));
+        Assert.Equal("Zum Bestätigen erneut klicken", element.GetAttribute("aria-label"));
+    }
+
+    [Fact]
     public void ConfirmsAndShowsTheContentAgain_OnTheSecondClick()
     {
         IRenderedComponent<GwiOSConfirmButtonUnderTest> button = RenderConfirmButton();

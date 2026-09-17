@@ -7,9 +7,10 @@
     color: var(--gwios-text);
 }
 
+/* Ohne eigenen z-index, damit Dialoge aus dem Inhalt über Kopfzeile und Statusleiste liegen können. Über dem
+   Hintergrund liegt der Inhalt trotzdem, weil er im Dokument nach ihm kommt. */
 .gwios-main {
     position: relative;
-    z-index: 1;
     max-width: var(--gwios-content-width);
     margin: 0 auto;
     padding: 40px 40px calc(var(--gwios-status-bar-height) + 52px);

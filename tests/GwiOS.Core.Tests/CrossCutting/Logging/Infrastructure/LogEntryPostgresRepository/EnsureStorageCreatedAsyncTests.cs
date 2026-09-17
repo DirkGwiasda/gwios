@@ -20,7 +20,7 @@ public sealed class EnsureStorageCreatedAsyncTests(PostgresTestDatabase database
 
         await _database.LogEntryRepository.EnsureStorageCreatedAsync();
 
-        List<LogEntry> storedLogEntries = await _database.LogEntryRepository.GetAllLogEntriesByAppAsync(_appName);
+        IReadOnlyList<LogEntry> storedLogEntries = await ReadStoredLogEntriesAsync();
         LogEntry storedLogEntry = Assert.Single(storedLogEntries);
         Assert.Equal(logEntry.Id, storedLogEntry.Id);
     }
@@ -30,4 +30,7 @@ public sealed class EnsureStorageCreatedAsyncTests(PostgresTestDatabase database
 
     public async ValueTask DisposeAsync()
         => await _database.LogEntryRepository.DeleteByAppNameAsync(_appName);
+
+    private async Task<IReadOnlyList<LogEntry>> ReadStoredLogEntriesAsync()
+        => (await _database.LogEntryRepository.GetLogEntryPageByAppAsync(_appName, 1, 10)).Entries;
 }

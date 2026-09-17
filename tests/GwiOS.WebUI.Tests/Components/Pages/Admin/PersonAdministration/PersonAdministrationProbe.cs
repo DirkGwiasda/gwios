@@ -1,3 +1,4 @@
+using AngleSharp.Dom;
 using GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement.Contracts;
 using GwiOS.WebUI.StatusMessages.Contracts;
 using GwiOS.WebUI.Tests.TestInfrastructure;
@@ -42,4 +43,25 @@ public abstract class PersonAdministrationProbe : BunitContext
         page.Find("input[aria-label='Kurzname der neuen Person']").Input(shortName);
         page.Find(".gwios-form-panel button").Click();
     }
+
+    /// <summary>
+    /// Clicks the edit button on the tile of the person with the given name.
+    /// </summary>
+    protected static void OpenEditor(IRenderedComponent<PersonAdministrationUnderTest> page, string name)
+        => page.Find($"button[title='„{name}“ bearbeiten']").Click();
+
+    /// <summary>
+    /// Enters the given text into the field of the edit dialog with the given id, such as <c>person-edit-name</c>.
+    /// </summary>
+    protected static void EnterIntoEditor(
+        IRenderedComponent<PersonAdministrationUnderTest> page,
+        string inputId,
+        string text)
+        => page.Find($"#{inputId}").Input(text);
+
+    /// <summary>
+    /// Returns the save button of the edit dialog.
+    /// </summary>
+    protected static IElement FindSaveButton(IRenderedComponent<PersonAdministrationUnderTest> page)
+        => page.FindAll(".gwios-dialog-actions button").Single(button => button.TextContent.Trim() != "Abbrechen");
 }

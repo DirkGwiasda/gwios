@@ -1,0 +1,94 @@
+@page "/satelliten"
+@implements IDisposable
+
+<PageTitle>Satelliten · gwi-os</PageTitle>
+
+<div class="gwios-page">
+    <h1>Satelliten</h1>
+    <p class="gwios-satellites-intro">
+        ESP32-Messknoten im Heimnetz. Jede Kachel ist ein Satellit und meldet Temperatur, Luftfeuchtigkeit und Luftdruck.
+    </p>
+
+    <div class="gwios-satellites-toolbar">
+        <span class="gwios-badge gwios-satellites-network @(OfflineCount > 0 ? "gwios-badge--danger" : "gwios-badge--success")">
+            @NetworkText
+        </span>
+        <span class="gwios-satellites-last-poll">Letzte Abfrage @LastPollText</span>
+        <label class="gwios-checkbox gwios-satellites-auto-refresh">
+            <input type="checkbox" checked="@_isAutoRefreshEnabled" @onchange="ChangeAutoRefreshAsync" />
+            Automatisch aktualisieren
+        </label>
+        <button type="button" class="gwios-button" disabled="@_isPolling" @onclick="PollNowAsync">
+            @(_isPolling ? "Abfrage …" : "Jetzt abfragen")
+        </button>
+    </div>
+
+    <div class="gwios-stack">
+        @if (Satellites.Count == 0)
+        {
+            <div class="gwios-panel">
+                <p class="gwios-empty">Noch keine Satelliten angelegt.</p>
+            </div>
+        }
+        else
+        {
+            <div class="gwios-tile-grid">
+                @foreach (SatelliteOverviewEntry entry in Satellites)
+                {
+                    <GwiOSSatelliteTile @key="entry.Satellite.Name" Entry="entry" Now="_now" />
+                }
+            </div>
+        }
+
+        @if (Candidates.Count > 0)
+        {
+            <GwiOSSection Title="Unbekannte Satelliten" Count="Candidates.Count">
+                <p class="gwios-satellites-candidates-intro">
+                    Diese Satelliten melden sich mit einem Namen, den GwiOS nicht kennt. „Anlegen“ übernimmt das Token,
+                    mit dem sie sich melden; „Blockieren“ weist sie künftig ab.
+                </p>
+                <div class="gwios-tile-grid gwios-tile-grid--wide">
+                    @foreach (SatelliteCandidate candidate in Candidates)
+                    {
+                        <GwiOSSatelliteCandidateTile @key="candidate.Name"
+                                                     Candidate="candidate"
+                                                     Now="_now"
+                                                     OnAdopt="() => OpenAdoptDialog(candidate)"
+                                                     OnBlock="() => BlockCandidateAsync(candidate)" />
+                    }
+                </div>
+            </GwiOSSection>
+        }
+    </div>
+</div>
+
+@if (_adoptedCandidate is not null)
+{
+    <GwiOSDialog Title="Satellit anlegen" CanClose="!_isSaving" OnClose="CloseAdoptDialog">
+        <ChildContent>
+            <GwiOSReadOnlyField Label="Name"
+                                Value="@_adoptedCandidate.Name"
+                                Marker="fest"
+                                Hint="Das Token übernimmt GwiOS aus dem Ping des Satelliten." />
+            <GwiOSFormField Label="Anzeigename (optional)"
+                            InputId="satellite-adopt-display-name"
+                            Hint="Wird in der Übersicht angezeigt. Leer = der Name wird verwendet."
+                            ErrorMessage="@_displayNameError">
+                <GwiOSTextBox id="satellite-adopt-display-name"
+                              @bind-Value="_adoptDisplayName"
+                              Placeholder="z. B. Kinderzimmer Mila"
+                              MaxLength="64"
+                              ErrorMessage="@_displayNameError"
+                              OnEnter="AdoptCandidateAsync" />
+            </GwiOSFormField>
+        </ChildContent>
+        <Actions>
+            <button type="button" class="gwios-button gwios-button--secondary" disabled="@_isSaving" @onclick="CloseAdoptDialog">
+                Abbrechen
+            </button>
+            <button type="button" class="gwios-button" disabled="@_isSaving" @onclick="AdoptCandidateAsync">
+                @(_isSaving ? "Legt an …" : "Anlegen")
+            </button>
+        </Actions>
+    </GwiOSDialog>
+}

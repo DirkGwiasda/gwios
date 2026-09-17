@@ -14,8 +14,8 @@ public sealed class MenuTests : BunitContext
         IRenderedComponent<AppHeaderUnderTest> header = Render<AppHeaderUnderTest>();
 
         IReadOnlyList<IElement> links = header.FindAll(".gwios-nav-desktop a");
-        Assert.Equal(["ToDos", "Admin"], links.Select(link => link.TextContent));
-        Assert.Equal(["todos", "admin"], links.Select(link => link.GetAttribute("href")));
+        Assert.Equal(["ToDos", "Satelliten", "Admin"], links.Select(link => link.TextContent));
+        Assert.Equal(["todos", "satelliten", "admin"], links.Select(link => link.GetAttribute("href")));
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public sealed class MenuTests : BunitContext
 
         header.Find(".gwios-burger").Click();
 
-        Assert.Equal(["ToDos", "Admin"], header.FindAll(".gwios-nav-mobile a").Select(link => link.TextContent));
+        Assert.Equal(["ToDos", "Satelliten", "Admin"], header.FindAll(".gwios-nav-mobile a").Select(link => link.TextContent));
         Assert.Equal("true", header.Find(".gwios-burger").GetAttribute("aria-expanded"));
         Assert.True(header.Find(".gwios-burger").ClassList.Contains("gwios-burger--open"));
     }

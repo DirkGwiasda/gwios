@@ -1,0 +1,18 @@
+@using System.Globalization
+
+<time datetime="@Value.ToString("O", CultureInfo.InvariantCulture)">@LocalText</time>
+
+@code {
+    /// <summary>
+    /// The point in time the element shows, in any offset; it is shown in the local time zone of the server.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public DateTimeOffset Value { get; set; }
+
+    [Inject]
+    private TimeProvider TimeProvider { get; set; } = default!;
+
+    private string LocalText
+        => TimeZoneInfo.ConvertTime(Value, TimeProvider.LocalTimeZone)
+            .ToString("dd.MM.yyyy HH:mm:ss", CultureInfo.InvariantCulture);
+}

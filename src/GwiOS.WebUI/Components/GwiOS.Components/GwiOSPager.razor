@@ -1,0 +1,46 @@
+<nav class="gwios-pager" aria-label="Seiten">
+    <span class="gwios-pager-range">@RangeText</span>
+
+    <div class="gwios-pager-sizes" role="group" aria-label="Einträge pro Seite">
+        <span class="gwios-pager-sizes-label">pro Seite</span>
+        @foreach (int pageSize in PageSizes)
+        {
+            bool isSelected = pageSize == PageSize;
+            <button type="button"
+                    class="gwios-pager-size @(isSelected ? "gwios-pager-size--selected" : null)"
+                    aria-pressed="@(isSelected ? "true" : "false")"
+                    @onclick="() => SelectPageSizeAsync(pageSize)">
+                @pageSize
+            </button>
+        }
+    </div>
+
+    <div class="gwios-pager-navigation">
+        <button type="button" class="gwios-pager-step" disabled="@IsOnFirstPage" @onclick="GoToPreviousPageAsync">
+            ‹ Zurück
+        </button>
+        <div class="gwios-pager-numbers">
+            @foreach (int? pageNumber in PageNumbers)
+            {
+                if (pageNumber is int number)
+                {
+                    bool isCurrent = number == CurrentPageNumber;
+                    <button type="button"
+                            class="gwios-pager-number @(isCurrent ? "gwios-pager-number--current" : null)"
+                            aria-current="@(isCurrent ? "page" : null)"
+                            @onclick="() => GoToPageAsync(number)">
+                        @number
+                    </button>
+                }
+                else
+                {
+                    <span class="gwios-pager-gap" aria-hidden="true">…</span>
+                }
+            }
+        </div>
+        <span class="gwios-pager-compact">@CompactText</span>
+        <button type="button" class="gwios-pager-step" disabled="@IsOnLastPage" @onclick="GoToNextPageAsync">
+            Weiter ›
+        </button>
+    </div>
+</nav>

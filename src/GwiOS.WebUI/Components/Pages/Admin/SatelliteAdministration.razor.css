@@ -1,0 +1,28 @@
+.gwios-satellite-administration-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin: 0 0 20px;
+}
+
+h1 {
+    margin: 0;
+}
+
+.gwios-satellite-administration-intro {
+    max-width: 660px;
+    margin: 0 0 20px;
+    color: var(--gwios-text-muted);
+    font-size: 14px;
+}
+
+.gwios-satellite-administration-grid {
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+}
+
+@media (max-width: 820px) {
+    .gwios-satellite-administration-grid {
+        grid-template-columns: 1fr;
+    }
+}

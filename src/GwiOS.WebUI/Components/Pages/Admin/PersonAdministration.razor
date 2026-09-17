@@ -14,10 +14,13 @@
         }
         else
         {
-            <div class="gwios-tile-grid gwios-tile-grid--compact">
+            <div class="gwios-tile-grid gwios-tile-grid--wide">
                 @foreach (Person person in _persons)
                 {
-                    <GwiOSPersonTile @key="person.Id" Person="person" OnDelete="() => DeletePersonAsync(person)" />
+                    <GwiOSPersonTile @key="person.Id"
+                                     Person="person"
+                                     OnEdit="() => OpenEditor(person)"
+                                     OnDelete="() => DeletePersonAsync(person)" />
                 }
             </div>
         }
@@ -33,9 +36,8 @@
             <GwiOSTextBox @bind-Value="_newShortName"
                           Placeholder="Kurzname"
                           AriaLabel="Kurzname der neuen Person"
+                          title="Leer lassen, um den Vornamen zu verwenden."
                           MaxLength="30"
-                          IsRequired="true"
-                          RequiredMessage="Bitte einen Kurznamen eingeben."
                           OnEnter="AddPersonAsync" />
             <button type="button" class="gwios-button" disabled="@(!CanAddPerson)" @onclick="AddPersonAsync">
                 Hinzufügen
@@ -43,3 +45,56 @@
         </div>
     </div>
 </div>
+
+@if (_editedPerson is not null)
+{
+    <GwiOSDialog Title="Person bearbeiten" CanClose="!_isSaving" OnClose="CloseEditor">
+        <ChildContent>
+            <GwiOSFormField Label="Name" InputId="person-edit-name" IsRequired="true" ErrorMessage="@_nameError">
+                <GwiOSTextBox id="person-edit-name"
+                              @bind-Value="_editName"
+                              @bind-Value:after="ClearNameError"
+                              Placeholder="z. B. Anna Gwiasda"
+                              MaxLength="100"
+                              IsRequired="true"
+                              RequiredMessage="@NameRequiredMessage"
+                              ErrorMessage="@_nameError"
+                              OnEnter="SavePersonAsync" />
+            </GwiOSFormField>
+            <GwiOSFormField Label="Kurzname"
+                            InputId="person-edit-short-name"
+                            IsRequired="true"
+                            Hint="Aus dem Kurznamen entsteht das Kürzel im Avatar."
+                            ErrorMessage="@_shortNameError">
+                <GwiOSTextBox id="person-edit-short-name"
+                              @bind-Value="_editShortName"
+                              @bind-Value:after="ClearShortNameError"
+                              Placeholder="z. B. Anna"
+                              MaxLength="30"
+                              IsRequired="true"
+                              RequiredMessage="@ShortNameRequiredMessage"
+                              ErrorMessage="@_shortNameError"
+                              OnEnter="SavePersonAsync" />
+            </GwiOSFormField>
+            <GwiOSFormField Label="Benutzerkonto (Keycloak-Benutzer-ID)"
+                            InputId="person-edit-identity-user-id"
+                            ErrorMessage="@_identityUserIdError">
+                <GwiOSTextBox id="person-edit-identity-user-id"
+                              @bind-Value="_editIdentityUserId"
+                              @bind-Value:after="ClearIdentityUserIdError"
+                              Placeholder="leer = kein Konto verknüpft"
+                              MaxLength="100"
+                              ErrorMessage="@_identityUserIdError"
+                              OnEnter="SavePersonAsync" />
+            </GwiOSFormField>
+        </ChildContent>
+        <Actions>
+            <button type="button" class="gwios-button gwios-button--secondary" disabled="@_isSaving" @onclick="CloseEditor">
+                Abbrechen
+            </button>
+            <button type="button" class="gwios-button" disabled="@_isSaving" @onclick="SavePersonAsync">
+                @(_isSaving ? "Speichert …" : "Speichern")
+            </button>
+        </Actions>
+    </GwiOSDialog>
+}

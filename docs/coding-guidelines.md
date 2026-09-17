@@ -38,10 +38,14 @@ with them, these win.
   root namespace followed by the folder path from the project file down to the type's own file.
   Where **CORE-2** binds the file name to the type name, this binds the folder to the namespace:
   together they make the place a type lives in derivable from its full name, and the reverse.
-  - Only folders *below* the project file count. `GwiOS.Core/ToDos/Domain/Workflow/Contracts/`
+  - Only folders *below* the project file count. `GwiOS.Core/ToDos/Domain/Workflows/Contracts/`
     inside the project `GwiOS.Core` gives
-    `GwiOS.Core.ToDos.Domain.Workflow.Contracts` — the `src` folder above the project file
+    `GwiOS.Core.ToDos.Domain.Workflows.Contracts` — the `src` folder above the project file
     contributes nothing.
+  - Folder and namespace segment are always spelled identically. In the backend (`GwiOS.Core`), a
+    folder that groups types of one kind is named in the plural — `Managers`, `Workflows` — and so
+    is its namespace segment; there is no singular variant of the same folder. The UI will get
+    rules of its own.
   - Moving a file into another folder therefore always means changing its namespace, and every
     `using` that pointed at it. That cost is intended: it keeps the two from drifting apart.
   - This is what the compiler's IDE0130 checks, so the rule is enforceable rather than a matter

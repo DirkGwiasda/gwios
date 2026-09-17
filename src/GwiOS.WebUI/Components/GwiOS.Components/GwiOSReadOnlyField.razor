@@ -1,0 +1,46 @@
+<div class="gwios-read-only-field">
+    <span class="gwios-read-only-field-label">@Label</span>
+    <div class="gwios-read-only-field-box">
+        <span class="gwios-read-only-field-value">@Value</span>
+        @if (Marker is not null)
+        {
+            <span class="gwios-read-only-field-marker">@Marker</span>
+        }
+    </div>
+    @if (Hint is not null)
+    {
+        <span class="gwios-read-only-field-hint @(IsHintWarning ? "gwios-read-only-field-hint--warning" : null)">@Hint</span>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// The label shown above the value.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string Label { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The value, which the user cannot change here.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string Value { get; set; } = string.Empty;
+
+    /// <summary>
+    /// A short note shown at the right edge of the value, such as <c>fest</c>, or <c>null</c> for none.
+    /// </summary>
+    [Parameter]
+    public string? Marker { get; set; }
+
+    /// <summary>
+    /// Explanation shown below the value, or <c>null</c> for none.
+    /// </summary>
+    [Parameter]
+    public string? Hint { get; set; }
+
+    /// <summary>
+    /// Whether the hint is a warning, which is shown in the warning color.
+    /// </summary>
+    [Parameter]
+    public bool IsHintWarning { get; set; }
+}

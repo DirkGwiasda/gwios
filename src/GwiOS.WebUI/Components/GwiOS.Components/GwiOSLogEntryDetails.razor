@@ -1,0 +1,52 @@
+<div class="gwios-log-details">
+    <dl class="gwios-log-details-facts">
+        <dt>Zeitstempel</dt>
+        <dd class="gwios-log-details-timestamp"><GwiOSTimestamp Value="Entry.Timestamp" /></dd>
+        <dt>Anwendung</dt>
+        <dd class="gwios-log-details-app">@Entry.AppName</dd>
+        <dt>Quelle</dt>
+        <dd class="gwios-log-details-source">@Entry.DataSource</dd>
+    </dl>
+
+    <section class="gwios-log-details-section">
+        <h3 class="gwios-log-details-label">Nachricht</h3>
+        <div class="gwios-log-details-message">@Entry.Message</div>
+    </section>
+
+    <section class="gwios-log-details-section">
+        <h3 class="gwios-log-details-label">Kontextdaten</h3>
+        @if (Entry.ContextData.Count == 0)
+        {
+            <p class="gwios-log-details-context-empty">Keine Kontextdaten</p>
+        }
+        else
+        {
+            <dl class="gwios-log-details-context">
+                @foreach (KeyValuePair<string, string> item in SortedContextData)
+                {
+                    <div class="gwios-log-details-context-item" @key="item.Key">
+                        <dt>@item.Key</dt>
+                        <dd>@item.Value</dd>
+                    </div>
+                }
+            </dl>
+        }
+    </section>
+
+    <div class="gwios-log-details-id">
+        <span class="gwios-log-details-id-label">ID</span>
+        <span class="gwios-log-details-id-value">@Entry.Id</span>
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// The log entry whose details are shown.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public LogEntry Entry { get; set; } = default!;
+
+    // The storage does not keep the order of the keys, so they are shown alphabetically.
+    private IEnumerable<KeyValuePair<string, string>> SortedContextData
+        => Entry.ContextData.OrderBy(item => item.Key, StringComparer.OrdinalIgnoreCase);
+}

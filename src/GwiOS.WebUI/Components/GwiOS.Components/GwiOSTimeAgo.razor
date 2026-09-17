@@ -1,0 +1,38 @@
+<span class="gwios-time-ago">@Text</span>
+
+@code {
+    private const int SecondsPerMinute = 60;
+    private const int SecondsPerHour = 60 * 60;
+    private const int SecondsPerDay = 24 * 60 * 60;
+
+    /// <summary>
+    /// The point in time in the past the element describes, in UTC.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public DateTime Value { get; set; }
+
+    /// <summary>
+    /// The current point in time, in UTC, which the age is measured against.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public DateTime Now { get; set; }
+
+    /// <summary>
+    /// Text put in front, such as <c>zuletzt </c>, or <c>null</c> for none.
+    /// </summary>
+    [Parameter]
+    public string? Prefix { get; set; }
+
+    private string Text
+        => $"{Prefix}vor {DescribeAge(Math.Max(0, (int)(Now - Value).TotalSeconds))}";
+
+    // Rounded down to the largest whole unit, like "vor 6 min" for six and a half minutes.
+    private static string DescribeAge(int seconds)
+        => seconds switch
+        {
+            < SecondsPerMinute => $"{seconds} s",
+            < SecondsPerHour => $"{seconds / SecondsPerMinute} min",
+            < SecondsPerDay => $"{seconds / SecondsPerHour} h",
+            _ => $"{seconds / SecondsPerDay} d"
+        };
+}

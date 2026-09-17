@@ -1,0 +1,120 @@
+<article class="gwios-satellite-admin-tile @(Satellite.IsLocked ? "gwios-satellite-admin-tile--locked" : null)">
+    <div class="gwios-satellite-admin-header">
+        <div class="gwios-satellite-admin-names">
+            <span class="gwios-satellite-admin-name">@Satellite.Name</span>
+            <span class="gwios-satellite-admin-display-name">@(Satellite.DisplayName ?? "kein Anzeigename")</span>
+        </div>
+        <div class="gwios-satellite-admin-badges">
+            @if (Satellite.IsLocked)
+            {
+                <span class="gwios-badge gwios-badge--danger">Gesperrt</span>
+            }
+            else
+            {
+                <span class="gwios-badge gwios-badge--success">Aktiv</span>
+            }
+            @if (Satellite.ProtectedToken is null)
+            {
+                <span class="gwios-badge gwios-badge--muted" title="Der Satellit hat kein Token; erst ein neues Token macht ihn nutzbar.">kein Token</span>
+            }
+        </div>
+    </div>
+
+    <dl class="gwios-satellite-admin-facts">
+        <dt>Zuletzt gesehen</dt>
+        <dd>
+            @if (Presence is null)
+            {
+                @:noch nie
+            }
+            else
+            {
+                <GwiOSTimestamp Value="ToUtcOffset(Presence.LastPingAt)" />
+            }
+        </dd>
+        <dt>Board</dt>
+        <dd>@(Presence?.Board ?? "unbekannt")</dd>
+        <dt>Firmware</dt>
+        <dd>@(Presence?.Firmware ?? "—")</dd>
+    </dl>
+
+    <div class="gwios-satellite-admin-actions">
+        <button type="button"
+                class="gwios-button gwios-button--compact gwios-button--secondary"
+                title="@($"„{Satellite.Name}“ bearbeiten")"
+                @onclick="OnEdit">
+            Bearbeiten
+        </button>
+        @if (Satellite.IsLocked)
+        {
+            <button type="button" class="gwios-button gwios-button--compact gwios-button--success" @onclick="OnToggleLock">
+                Entsperren
+            </button>
+        }
+        else
+        {
+            <button type="button" class="gwios-button gwios-button--compact gwios-button--warning" @onclick="OnToggleLock">
+                Sperren
+            </button>
+        }
+        <GwiOSConfirmButton Title="@($"Neues Token für „{Satellite.Name}“ erzeugen")"
+                            ConfirmText="Altes Token ungültig?"
+                            ConfirmTitle="Zum Bestätigen erneut klicken – das bisherige Token funktioniert danach nicht mehr"
+                            CssClass="gwios-button gwios-button--compact gwios-button--secondary"
+                            ConfirmCssClass="gwios-button gwios-button--compact gwios-button--warning"
+                            OnConfirmed="OnRenewToken">
+            Neues Token
+        </GwiOSConfirmButton>
+        <span class="gwios-satellite-admin-delete">
+            <GwiOSConfirmButton Title="@($"„{Satellite.Name}“ löschen")"
+                                ConfirmText="Sicher?"
+                                ConfirmTitle="Zum Bestätigen erneut klicken"
+                                CssClass="gwios-button gwios-button--compact gwios-button--secondary"
+                                ConfirmCssClass="gwios-button gwios-button--compact gwios-button--danger"
+                                OnConfirmed="OnDelete">
+                Löschen
+            </GwiOSConfirmButton>
+        </span>
+    </div>
+</article>
+
+@code {
+    /// <summary>
+    /// The satellite the tile shows.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public Satellite Satellite { get; set; } = default!;
+
+    /// <summary>
+    /// What the satellite reported with its latest ping, or <c>null</c> if it has not pinged since GwiOS started.
+    /// </summary>
+    [Parameter]
+    public SatellitePresence? Presence { get; set; }
+
+    /// <summary>
+    /// Raised when the user clicks the edit button.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnEdit { get; set; }
+
+    /// <summary>
+    /// Raised when the user locks or unlocks the satellite.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnToggleLock { get; set; }
+
+    /// <summary>
+    /// Raised when the user requests a new token and confirms it with a second click.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnRenewToken { get; set; }
+
+    /// <summary>
+    /// Raised when the user deletes the satellite and confirms it with a second click.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnDelete { get; set; }
+
+    private static DateTimeOffset ToUtcOffset(DateTime utcDateTime)
+        => new(DateTime.SpecifyKind(utcDateTime, DateTimeKind.Utc));
+}

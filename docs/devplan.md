@@ -11,6 +11,8 @@
 - [x] DI-6 in `LogEntryManager` und `DefaultLogger<T>` umgesetzt
 - [x] Unit-Tests (`tests/GwiOS.Core.Tests`): `LogEntry`, `LogEntryManager`, `DefaultLogger<T>`, `AddGwiOSCore` — 33 grün
 - [x] Integrationstests für `LogEntryPostgresRepository` — 12 grün
+- [x] Paging: `GetLogEntryPageAsync` (alle Apps) und `GetLogEntryPageByAppAsync` liefern eine `LogEntryPage`
+      (Einträge einer Seite + Gesamtzahl); ersetzen `GetAllLogEntriesByAppAsync`
 - [ ] WebUI: `Program` (Composition Root) ist nicht durch Tests abgedeckt (das Testprojekt `GwiOS.WebUI.Tests`
       deckt bisher nur Komponenten, Seiten und Dienste ab)
 
@@ -20,7 +22,11 @@
   Repositories teilen sich diese Data Source der GwiOS-Datenbank.
 - Die Datenbank wird nicht von der Anwendung angelegt, sie muss bereits existieren. Das Repository stellt nur Schema,
   Tabelle und Index sicher; der Benutzer braucht dafür das Recht `CREATE` auf der Datenbank.
-- Logging-Tabellen liegen im Schema `logging`: Tabelle `logging.log_entries`, Index auf `(app_name, timestamp DESC)`.
+- Logging-Tabellen liegen im Schema `logging`: Tabelle `logging.log_entries`, Indizes auf `(app_name, timestamp DESC)`
+  und `(timestamp DESC)` (für die Seiten über alle Apps).
+- Paging geschieht in der Datenbank (`LIMIT`/`OFFSET` plus `count(*)`), nicht in der WebUI. Seitennummern zählen ab 1;
+  Seitennummer oder -größe unter 1 lehnt der `LogEntryManager` mit `ArgumentOutOfRangeException` ab. Eine Seite
+  hinter dem letzten Eintrag ist leer, die Gesamtzahl stimmt trotzdem.
 - `ContextData` wird als `jsonb` gespeichert, `LogLevel` als `smallint` (numerischer Enum-Wert).
 - Log-Einträge einer App werden neueste zuerst geliefert, App-Namen alphabetisch.
 - `LogLevel.None` ist nur der Default-Wert eines nicht gesetzten Levels und wird für echte Log-Einträge nicht genutzt.
@@ -31,6 +37,14 @@
 
 ### Tests
 
+- Stolperstein (17.09.2026): In der VM nie mit den Standard-Ausgabeordnern bauen. `bin/` und `obj/` liegen im
+  Freigabeordner und werden auch von Visual Studio unter Windows benutzt. Der CSS-Scope einer Komponente ist ein Hash
+  über ihren relativen Pfad, und der unterscheidet sich zwischen Linux (`/`) und Windows (`\`). Nach einem Build in
+  der VM hielt Visual Studio das Bundle `GwiOS.WebUI.styles.css` für aktuell, kompilierte die Komponenten aber mit den
+  Windows-Scopes – alle komponenteneigenen Styles fielen weg (Kopfzeile, Kacheln, Abschnitte). In der VM deshalb
+  immer mit eigenem Ausgabeordner bauen und testen:
+  `dotnet test --project <Projekt> --artifacts-path ~/build/gwios-dotnet` (geprüft: schreibt nichts in den
+  Freigabeordner).
 - `dotnet test` läuft über die Microsoft Testing Platform (`global.json`, Pflicht für xunit v3 unter dem .NET-10-SDK):
   `dotnet test --solution src/GwiOS.slnx` bzw. `dotnet test --project tests/GwiOS.Core.Tests/GwiOS.Core.Tests.csproj`.
 - Nach R5 heißt das Testverzeichnis wie die getestete Klasse und nach CORE-3 dann auch der Namespace. Weil der
@@ -132,6 +146,9 @@
       `/` und `/admin` leiten weiter
 - [x] Statusleiste mit Verlauf: `IStatusMessageService` / `StatusMessageService` (scoped je Sitzung, max. 50 Meldungen)
 - [x] Testprojekt `tests/GwiOS.WebUI.Tests` (xunit v3 + bUnit 2) — 127 grün
+- [x] Vorlage vom 2026-09-12 übernommen: Komponenten `GwiOSPager`, `GwiOSDialog`, `GwiOSLogEntryDetails`,
+      `GwiOSFormField`, `GwiOSTimestamp`; System-Logs mit Auswahl „Alle“, Paging und Detail-Dialog;
+      Benutzerverwaltung mit neuen Kacheln und Dialog „Person bearbeiten“ — WebUI-Tests gesamt: 221 grün
 - [ ] Haushaltsbuch aus der Vorlage (vorerst ausgenommen)
 
 ### Entscheidungen
@@ -148,11 +165,26 @@
   Tabelle, Panel, Plaketten) als Klassen `gwios-*` zentral in `app.css` (Ausnahme der UI-Regeln für einfache,
   zentral gestylte HTML-Elemente).
 - Tabellen tragen `data-label` je Zelle; unter 820 px wird jede Zeile zur Karte (wie in der Vorlage).
-- Benutzerverwaltung zeigt Personen (Kürzel-Avatar, Name, Kurzname, Konto ja/nein). Die Rollen der Vorlage
-  (Admin/Mitglied/Kind) entfallen, bis es Rollen gibt. Löschen von Personen und Log-Einträgen verlangt einen
-  zweiten Klick (`GwiOSConfirmButton`); ToDos werden wie in der Vorlage sofort gelöscht.
-- System-Logs zeigen je Anwendung (Auswahl als Pills) Zeitstempel, Level und Nachricht, neueste zuerst; dazu
-  „Aktualisieren“ und „Einträge löschen“.
+- Benutzerverwaltung zeigt Personen (Avatar mit den ersten zwei Zeichen des Kurznamens, Name, Kurzname, Konto /
+  kein Konto). Löschen von Personen und Log-Einträgen verlangt einen zweiten Klick (`GwiOSConfirmButton`, bei
+  Personen „Sicher?“); ToDos werden wie in der Vorlage sofort gelöscht. Die Bestätigung bricht beim Verlassen des
+  Knopfs ab, nicht nach 3,5 s wie in der Vorlage.
+- Anlegen braucht nur den Namen; ohne Kurzname wird das erste Wort des Namens verwendet (wie in der Vorlage).
+- „Person bearbeiten“ (Dialog) ändert Name, Kurzname und Keycloak-Benutzer-ID; eine leere ID heißt „kein Konto“.
+  Leere Pflichtfelder prüft die Seite selbst (deutsche Meldungen am Feld), Duplikate meldet der Core per
+  `DuplicatePersonException` und die Seite zeigt sie am betroffenen Feld. Ist die Person inzwischen gelöscht, schließt
+  der Dialog mit roter Meldung. Während des Speicherns lässt sich der Dialog nicht schließen.
+- Statusmeldungen der Benutzerverwaltung wie in der Vorlage: Anlegen grau, Löschen orange, Speichern blau,
+  fehlgeschlagenes Speichern rot.
+- System-Logs: Auswahl „Alle“ (Vorgabe) oder eine Anwendung (Pills), je Seite 10/25/50 Einträge, neueste zuerst.
+  Die Tabelle zeigt nur die erste Zeile der Nachricht, gekürzt auf 90 Zeichen; ein Klick (oder Enter) auf die Zeile
+  öffnet den Dialog „Log-Eintrag“ mit allen Details inkl. Quelle, Kontextdaten (alphabetisch) und ID. Dazu
+  „Aktualisieren“ und – nur bei gewählter Anwendung – „Einträge löschen“; danach springt die Auswahl auf „Alle“.
+  Liegt die aktuelle Seite nach dem Aktualisieren hinter der letzten, wird die letzte gezeigt.
+- Dialoge (`GwiOSDialog`) werden gerendert, solange sie offen sind, liegen über Kopfzeile und Statusleiste und werden
+  unter 820 px zum Blatt von unten. Dafür hat `.gwios-main` keinen eigenen `z-index` mehr (er hätte die Dialoge in
+  seinem Stapelkontext eingesperrt). Der Dialog holt sich beim Öffnen den Fokus; Escape und Klick daneben schließen.
+- Zeitstempel zeigt `GwiOSTimestamp` einheitlich als `dd.MM.yyyy HH:mm:ss` in der lokalen Zeitzone des Servers.
 - Statusmeldungen: Grau = neutral, Blau = Erfolg, Orange = Warnung, Rot = Fehler. `StatusMessageService` loggt nur
   das Level (Debug), nicht den Text, da er Namen enthalten kann. Seiten loggen nicht selbst; Manager, Validatoren
   und Repositories loggen die fachlichen Vorgänge bereits.
@@ -162,7 +194,8 @@
 
 - Sollen die Admin-Seiten auf eine Keycloak-Rolle beschränkt werden? Derzeit genügt die Anmeldung.
 - Anmeldestatus und Abmelden sind in der Vorlage nicht vorgesehen und fehlen daher im Header (`/logout` existiert).
-- Die System-Logs laden alle Einträge einer Anwendung; bei großen Mengen braucht es Paging oder Virtualisierung.
+- Der Dialog hält den Tastatur-Fokus nicht fest (kein Focus-Trap) und sperrt das Scrollen der Seite nicht; beides
+  bräuchte JavaScript.
 - `wwwroot/lib/bootstrap` wird nicht mehr verwendet und kann entfernt werden.
 
 ## Deployment (deploy/rpi5)
@@ -246,10 +279,31 @@ Kleine Hardwaremodule, die Messwerte über das LAN an GwiOS schicken. Erstes Mod
       `CMakeLists.txt`, Board-Name in `main.c`. Baut ohne Warnungen (1,0 MB). Am Board geprüft (17.09.2026):
       HTTPS und Zertifikat gegen `webui.gwios.gwiasda.net` funktionieren; die WebUI antwortet mangels
       Endpunkt mit `302` (Weiterleitung zum Login), die der Satellit wie vorgesehen nicht verfolgt
-- [ ] GwiOS: Satelliten verwalten, Ping-Endpunkt, Pull-Dienst, Seite „Satelliten“ — nach dem Satelliten
-      Hinweis aus dem Test des Satelliten: `/api/satellites/…` darf nicht unter die Cookie-/OpenID-Anmeldung
-      fallen. Ohne eigene Regel leitet die WebUI den Ping mit `302` zum Keycloak-Login um; die API muss
-      stattdessen selbst mit `204`, `401` oder `404` antworten.
+- [x] Software-Architektur vorbereitet: allgemeine Regeln (Domänen, Manager, Workflows, Hosts, Lebensdauer) in
+      `docs/architecture.md`, von Dirk bestätigt (17.09.2026)
+- [x] Architektur der Domäne `Satellites` in `docs/architecture.md` bestätigt (17.09.2026): vier Manager, fünf
+      Workflows, Ping-API, Hintergrunddienst, Seiten „Satelliten“ und „Satellitenverwaltung“
+- [x] GwiOS, Core (`src/GwiOS.Core/Satellites`, 17.09.2026): Manager `SatelliteManagement` (Postgres-Tabelle
+      `satellites.satellites`, Token per Data Protection), `SatellitePresenceManagement`,
+      `SatelliteCandidateManagement` und `MeasurementManagement` (HTTP-Client, Verläufe) mit In-Memory-Repositories;
+      Workflows `SatellitePing`, `MeasurementPolling`, `SatelliteOverview`, `SatelliteAdoption`, `SatelliteBlocking`;
+      Registrierung in `AddGwiOSCore`. Unit-Tests Core gesamt 387 grün
+- [x] GwiOS, WebUI (17.09.2026): Ping-API `POST /api/satellites/{name}/ping` (`Api/Satellites`), Hintergrunddienst
+      `BackgroundServices/MeasurementPollingService` (30 s, `Satellites:MeasurementPolling:IntervalSeconds`), Seite
+      `/satelliten` mit unbekannten Satelliten, Admin-Seite `/admin/satelliten`, Komponenten `GwiOSSatelliteTile`,
+      `GwiOSSatelliteAdminTile`, `GwiOSSatelliteCandidateTile`, `GwiOSSatelliteTokenDetails`, `GwiOSSignalStrength`,
+      `GwiOSTimeAgo`, `GwiOSReadOnlyField`; Navigation ergänzt. WebUI-Tests gesamt 342 grün
+- [x] `Flash-Satellite.ps1` erzeugt ein Token, wenn die CSV keins enthält; Vorlage und README angepasst
+- [x] Satellit, Firmware 0.1.1 (17.09.2026): verbindet sich mit dem stärksten Zugangspunkt statt mit dem ersten
+      gefundenen und loggt BSSID und Kanal; baut ohne Warnungen (1,0 MB), nach `dist/` exportiert
+- [x] Firmware 0.1.1 am Board geprüft (17.09.2026): Satellit in der 2. Etage hängt jetzt am Repeater statt an der
+      Fritzbox, Signal -75 statt -82 dBm; `Flash-Satellite.ps1` mit vorhandenem Token unter Windows gelaufen
+- [ ] Integrationstests `SatellitePostgresRepository` (11) laufen lassen — in der VM fehlt `GwiOS.DB.TestConnectionstring`
+- [ ] `Flash-Satellite.ps1` unter Windows mit leerem Token prüfen (Token wird erzeugt und in die CSV geschrieben)
+- [x] Deploy auf den Pi (17.09.2026); Ping von `arbeitszimmer` erschien als unbekannter Satellit und wurde über
+      „Anlegen“ mit seinem Token übernommen
+- [ ] Test am Board abschließen: Ping wird angenommen (`204`), Messwerte erscheinen in der Kachel, Offline nach 3 min
+      ohne Strom
 
 ### Entscheidungen
 
@@ -314,6 +368,45 @@ Kleine Hardwaremodule, die Messwerte über das LAN an GwiOS schicken. Erstes Mod
 - Das Abholen übernimmt vorerst ein Hintergrunddienst in der WebUI (kein eigener Container). Später soll
   ein allgemeines System zur zeitgesteuerten Verarbeitung von Tasks entstehen, das diesen Dienst ablöst
   (Vorgabe von Dirk, 17.09.2026).
+- Unbekannte Satelliten (Vorschlag von Claude, bestätigt von Dirk, 17.09.2026): Ein Ping mit unbekanntem Namen
+  wird weiter mit `404` beantwortet, der Satellit aber als Kandidat im Speicher gehalten (höchstens 20, verfällt
+  nach 10 min ohne Ping; ungültige Namen oder Tokens werden nicht aufgenommen). Die Seite „Satelliten“ zeigt ihn
+  mit Adresse, Board, Firmware und Signal. „Anlegen“ übernimmt das mitgeschickte Token — dafür erzeugt
+  `Flash-Satellite.ps1` ein Token, wenn die CSV keins enthält; das ist keine Selbstanmeldung, weil nichts ohne
+  Klick geschieht. Wechselt das Token zwischen zwei Pings desselben Namens, ist „Anlegen“ gesperrt (jemand
+  könnte dem echten Satelliten zuvorkommen). „Blockieren“ legt den Namen gesperrt ohne Token an. Das Token eines
+  Kandidaten erscheint nie in UI oder Log. Anlegen mit einem von GwiOS erzeugten Token bleibt möglich.
+- Umsetzung GwiOS-Seite (Entscheidungen von Claude, 17.09.2026):
+  - Die Ping-API gehört nicht unter die Status-Code-Seiten: `UseStatusCodePagesWithReExecute` läuft nur außerhalb von
+    `/api`, sonst würde eine `404`/`401` auf die Not-found-Seite umgeleitet, die eine Anmeldung verlangt (Ursache der
+    `302` beim Test des Satelliten). Der Endpunkt ist `AllowAnonymous`, Body höchstens 4 KB, ungültiger Body → `400`.
+  - Die gemeldete Adresse muss `http://host[:port]` ohne Pfad, Query oder Benutzerangaben sein: GwiOS schickt dorthin
+    das Token. Board und Firmware 1–64 Zeichen, Signal −127…0 dBm, höchstens 8 Sensoren.
+  - Tokens werden in konstanter Zeit verglichen; ein Token, das sich nicht entschlüsseln lässt, gilt als abgelehnt
+    (`401`) und wird als Fehler geloggt. Neue Tokens: 32 Zufallsbytes, base64url (43 Zeichen).
+  - Abholen: Zeitlimit 5 s, Antwort höchstens 64 KB; abgefragt werden nur nicht gesperrte Satelliten, die online
+    sind. „Letzte Abfrage“ ist der jüngste Abholzeitpunkt über alle Verläufe.
+  - Langer Verlauf: der 1., 11., 21. … abgeholte Wert, damit er nicht in den ersten Minuten leer ist. Der Trend
+    „K / 1 h“ vergleicht den aktuellen Wert mit dem ältesten Wert der letzten Stunde aus beiden Verläufen.
+  - Logging sparsam, weil jeder Eintrag in die Datenbank geht: kein Eintrag pro Ping oder Abholung, sondern nur bei
+    „online“, neuen Kandidaten, Fehlern und Änderungen. Lesende Workflows loggen nicht.
+  - Höhe der Sparkline-Balken (Vorgabe von Dirk, 17.09.2026): berechnet aus dem auf 0,1 gerundeten Wert, damit gleich
+    angezeigte Werte gleich hohe Balken haben; die Skala umfasst mindestens 0,5 K um die Mitte der Werte. Vorher
+    wurde die Spanne der ungerundeten Werte immer auf die volle Höhe gestreckt, sodass Rauschen von 0,08 K wie ein
+    Sprung aussah.
+  - Hinter der relativen Feuchte steht in Klammern die absolute Feuchte, z. B. `44 % (8,8 g/m³)` (Vorgabe von Dirk,
+    17.09.2026). Der BME280 misst nur die relative Feuchte; die absolute wird aus Temperatur (°C) und relativer
+    Feuchte mit der Magnus-Formel berechnet (auf etwa 0,1 g/m³ genau zwischen -30 und 35 °C). Ohne Temperatur entfällt
+    sie. Sie ist anders als die relative Feuchte kaum von der Eigenwärme des ESP32 betroffen. Berechnet wird sie wie
+    der Trend in der Kachel selbst, weil sie nur der Anzeige dient.
+  - Jeder Balken der Sparkline nennt als Tooltip Wert, Einheit und Messzeit in lokaler Zeit, z. B.
+    `22,4 °C · 14:32:10` (Vorgabe von Dirk, 17.09.2026).
+  - Abweichungen von der Vorlage: In der Kachel steht „Name · Board“ statt „SAT-Kennung · Chip“ (beides gibt es
+    nicht); „Neues Token“ verlangt wie „Löschen“ einen zweiten Klick, weil das alte Token sofort ungültig wird; ein
+    Satellit ohne Token trägt die Plakette „kein Token“; die Checkbox „Automatisch aktualisieren“ und der Bereich
+    „Unbekannte Satelliten“ sind nicht in der Vorlage und im Stil der übrigen Elemente gestaltet.
+- Satelliten haben einen optionalen Anzeigenamen (Vorgabe von Dirk, 17.09.2026); ohne ihn wird der Name
+  angezeigt. Der Name selbst ist nach dem Anlegen unveränderlich.
 - Tests der Firmware (Entscheidung von Dirk zu R5, 17.09.2026): Host-Tests mit Unity für die reine Logik
   (Token-Prüfung, JSON von Ping und Messwerten, Konfiguration prüfen, BME280-Kompensation), lauffähig in
   der VM ohne Board. Ablage unter `tests/GwiOS.Satellite.Bme280.Tests` mit gespiegelter Struktur wie in R5.
@@ -352,6 +445,13 @@ Kleine Hardwaremodule, die Messwerte über das LAN an GwiOS schicken. Erstes Mod
   Offset und Größe von `config` aus `partitions.csv`, fordert zum Handgriff für den Download-Modus auf,
   flasht mit `--before no-reset` und 115200 Baud und löscht das NVS-Image mit den Geheimnissen danach.
   Die CSV-Dateien liegen unter `%USERPROFILE%\.gwios\satellites\<name>.csv`.
+- Zugangspunkt im Mesh (Vorschlag von Claude, Stufe 1 bestätigt von Dirk, 17.09.2026): Mit der Voreinstellung
+  `WIFI_FAST_SCAN` nahm der Satellit den ersten Zugangspunkt mit der SSID – in der 2. Etage die Fritzbox im EG
+  (-82 dBm) statt des Repeaters in der 1. Etage. Jetzt `WIFI_ALL_CHANNEL_SCAN` mit `WIFI_CONNECT_AP_BY_SIGNAL`:
+  alle Kanäle absuchen, den stärksten nehmen; kostet etwa 1–2 s pro Verbindung. Beim Verbinden werden BSSID und
+  Kanal geloggt. Offen als Stufe 2, falls nötig: 802.11k/v (`CONFIG_ESP_WIFI_11KV_SUPPORT`), damit das Mesh den
+  Satelliten im laufenden Betrieb umlenken kann – ohne sie bleibt er bis zum nächsten Verbindungsabbruch am
+  gewählten Zugangspunkt.
 - WLAN (Entscheidungen von Claude): Nach einem Verbindungsverlust versucht der Satellit es nach 1 s erneut,
   die Pause verdoppelt sich bis höchstens 60 s und fällt nach einer erfolgreichen Verbindung auf 1 s zurück.
   Mit Passwort wird mindestens WPA2 verlangt, damit kein schwächer gesichertes Netz gleichen Namens genommen
@@ -464,5 +564,8 @@ Kleine Hardwaremodule, die Messwerte über das LAN an GwiOS schicken. Erstes Mod
 
 - Wie messen die Satelliten, ohne dass die Eigenwärme des ESP32 die Temperatur verfälscht (Abstand,
   Gehäuse, Korrekturwert)?
+- Die Ping-API hat keine Begrenzung der Anfragerate; Kandidaten sind auf 20 begrenzt. Reicht das, falls die WebUI
+  aus dem Internet erreichbar ist?
+- Wer darf die Seiten „Satelliten“ und „Satellitenverwaltung“ sehen? Derzeit genügt die Anmeldung.
 - Ist `webui.gwios.gwiasda.net` aus dem Internet erreichbar oder nur im LAN? (Für den Ping ist HTTPS
   ohnehin beschlossen; die Antwort bestimmt, wie streng der Endpunkt gegen Missbrauch zu schützen ist.)

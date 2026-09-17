@@ -1,0 +1,29 @@
+<div class="gwios-satellite-token">
+    <div class="gwios-satellite-token-warning" role="alert">
+        <span class="gwios-satellite-token-warning-icon" aria-hidden="true">!</span>
+        <div class="gwios-satellite-token-warning-text">
+            <span class="gwios-satellite-token-warning-title">Dieses Token wird nur dieses eine Mal angezeigt.</span>
+            <span>
+                Jetzt kopieren und in die Konfiguration von <strong>@SatelliteName</strong> eintragen. Danach lässt es
+                sich nicht mehr auslesen — nur ein neues Token erzeugen.
+            </span>
+        </div>
+    </div>
+    <div class="gwios-satellite-token-field">
+        <span class="gwios-satellite-token-label">Token</span>
+        <div class="gwios-satellite-token-row">
+            <div class="gwios-satellite-token-value">@Token</div>
+            <button type="button"
+                    class="gwios-button @(_isCopied ? "gwios-button--success" : null) gwios-satellite-token-copy"
+                    @onclick="CopyTokenAsync">
+                @(_isCopied ? "✓ Kopiert" : "Kopieren")
+            </button>
+        </div>
+        @if (_hasCopyFailed)
+        {
+            <span class="gwios-satellite-token-copy-error" role="alert">
+                Kopieren ist hier nicht möglich – bitte das Token markieren und kopieren.
+            </span>
+        }
+    </div>
+</div>

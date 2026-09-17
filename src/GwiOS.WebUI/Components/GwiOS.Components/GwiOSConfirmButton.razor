@@ -1,7 +1,7 @@
 <button type="button"
         class="@(_isAwaitingConfirmation ? ConfirmCssClass : CssClass)"
-        title="@(_isAwaitingConfirmation ? ConfirmText : Title)"
-        aria-label="@(_isAwaitingConfirmation ? ConfirmText : Title)"
+        title="@(_isAwaitingConfirmation ? ConfirmTitle ?? ConfirmText : Title)"
+        aria-label="@(_isAwaitingConfirmation ? ConfirmTitle ?? ConfirmText : Title)"
         disabled="@IsDisabled"
         @onclick="OnClickAsync"
         @onblur="CancelConfirmation">
@@ -29,6 +29,13 @@
     /// </summary>
     [Parameter]
     public string ConfirmText { get; set; } = "Wirklich löschen?";
+
+    /// <summary>
+    /// Tooltip and accessible name of the button while it waits for the confirming second click, or <c>null</c> to
+    /// use <see cref="ConfirmText"/>. Useful when the confirm text is too short to explain itself.
+    /// </summary>
+    [Parameter]
+    public string? ConfirmTitle { get; set; }
 
     /// <summary>
     /// Tooltip and accessible name of the button before it is clicked, or <c>null</c> for none.

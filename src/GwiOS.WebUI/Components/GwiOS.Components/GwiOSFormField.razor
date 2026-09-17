@@ -1,0 +1,56 @@
+<div class="gwios-form-field">
+    <label class="gwios-form-field-label" for="@InputId">
+        @Label
+        @if (IsRequired)
+        {
+            <span class="gwios-form-field-required" title="Pflichtfeld">*</span>
+        }
+    </label>
+    @ChildContent
+    @if (Hint is not null)
+    {
+        <span class="gwios-form-field-hint">@Hint</span>
+    }
+    @if (ErrorMessage is not null)
+    {
+        <span class="gwios-form-field-error" role="alert">@ErrorMessage</span>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// The label shown above the input.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string Label { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The <c>id</c> of the input in <see cref="ChildContent"/>, which the label belongs to.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string InputId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Whether the field must be filled in; marks the label with an asterisk.
+    /// </summary>
+    [Parameter]
+    public bool IsRequired { get; set; }
+
+    /// <summary>
+    /// Explanation shown below the input, or <c>null</c> for none.
+    /// </summary>
+    [Parameter]
+    public string? Hint { get; set; }
+
+    /// <summary>
+    /// Error shown below the input, or <c>null</c> while the value is valid.
+    /// </summary>
+    [Parameter]
+    public string? ErrorMessage { get; set; }
+
+    /// <summary>
+    /// The input of the field, whose <c>id</c> must be <see cref="InputId"/>.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

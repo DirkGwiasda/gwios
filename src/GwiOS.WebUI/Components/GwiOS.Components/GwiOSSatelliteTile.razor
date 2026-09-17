@@ -1,0 +1,77 @@
+<article class="gwios-satellite-tile @(Entry.IsOnline ? null : "gwios-satellite-tile--offline")">
+    <div class="gwios-satellite-tile-header">
+        <div class="gwios-satellite-names">
+            <span class="gwios-satellite-title">@Title</span>
+            <span class="gwios-satellite-subtitle">@Subtitle</span>
+        </div>
+        <div class="gwios-satellite-state">
+            <span class="gwios-satellite-stamp">
+                @if (Entry.Presence is null)
+                {
+                    @:noch keine Daten
+                }
+                else
+                {
+                    <GwiOSTimestamp Value="ToUtcOffset(Entry.Presence.LastPingAt)" />
+                }
+            </span>
+            @if (Entry.IsOnline)
+            {
+                <span class="gwios-badge gwios-badge--success">Online</span>
+            }
+            else
+            {
+                <span class="gwios-badge gwios-badge--danger gwios-badge--pulse">Offline</span>
+            }
+        </div>
+    </div>
+
+    <div class="gwios-satellite-temperature gwios-satellite-heat--@HeatLevel">
+        <span class="gwios-satellite-temperature-value">@TemperatureText</span>
+        <div class="gwios-satellite-temperature-caption">
+            <span class="gwios-satellite-caption">Temperatur</span>
+            <span class="gwios-satellite-trend gwios-satellite-trend--@TrendDirection">@TrendText</span>
+        </div>
+        <div class="gwios-satellite-spark" aria-hidden="true">
+            @foreach (SparkBar bar in SparkBars)
+            {
+                <span class="gwios-satellite-spark-bar" style="@bar.Style" title="@bar.Title"></span>
+            }
+        </div>
+    </div>
+
+    <div class="gwios-satellite-gauges">
+        <div class="gwios-satellite-gauge gwios-satellite-gauge--humidity">
+            <span class="gwios-satellite-gauge-caption">Feuchte</span>
+            <span class="gwios-satellite-gauge-value">
+                @HumidityText
+                @if (AbsoluteHumidityText is not null)
+                {
+                    <span class="gwios-satellite-gauge-extra" title="Absolute Luftfeuchtigkeit">(@AbsoluteHumidityText)</span>
+                }
+            </span>
+            <div class="gwios-satellite-gauge-track"><span class="gwios-satellite-gauge-fill" style="@HumidityBarStyle"></span></div>
+        </div>
+        <div class="gwios-satellite-gauge gwios-satellite-gauge--pressure">
+            <span class="gwios-satellite-gauge-caption">Luftdruck</span>
+            <span class="gwios-satellite-gauge-value">@PressureText</span>
+            <div class="gwios-satellite-gauge-track"><span class="gwios-satellite-gauge-fill" style="@PressureBarStyle"></span></div>
+        </div>
+    </div>
+
+    <div class="gwios-satellite-footer">
+        @if (Entry.Presence is null)
+        {
+            <span class="gwios-satellite-network">keine Verbindungsdaten</span>
+            <span class="gwios-satellite-seen">noch nie gesehen</span>
+        }
+        else
+        {
+            <GwiOSSignalStrength RssiDbm="Entry.Presence.WifiRssiDbm" IsActive="Entry.IsOnline" />
+            <span class="gwios-satellite-network">@Entry.Presence.WifiRssiDbm dBm · @Host</span>
+            <span class="gwios-satellite-seen">
+                <GwiOSTimeAgo Value="Entry.Presence.LastPingAt" Now="Now" Prefix="@(Entry.IsOnline ? null : "zuletzt ")" />
+            </span>
+        }
+    </div>
+</article>

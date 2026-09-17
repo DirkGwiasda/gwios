@@ -1,11 +1,23 @@
 .gwios-person-tile {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 12px;
     padding: 14px;
     border: 1px solid var(--gwios-border);
     border-radius: var(--gwios-radius);
     background: var(--gwios-surface-tile);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gwios-person-tile:hover {
+    border-color: rgba(0, 136, 255, 0.45);
+    box-shadow: 0 0 14px rgba(0, 136, 255, 0.12);
+}
+
+.gwios-person-tile-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .gwios-person-avatar {
@@ -13,8 +25,8 @@
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
     border-radius: 10px;
     background:
         radial-gradient(120% 120% at 30% 30%, #00aaff 0%, #0080ff 25%, transparent 26%),
@@ -28,19 +40,36 @@
 
 .gwios-person-names {
     display: flex;
-    flex: 1;
+    flex: 1 1 auto;
     flex-direction: column;
+    gap: 3px;
     min-width: 0;
+}
+
+.gwios-person-name,
+.gwios-person-short-name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .gwios-person-name {
     color: var(--gwios-text);
     font-size: 14px;
-    overflow-wrap: anywhere;
+    font-weight: 600;
 }
 
 .gwios-person-short-name {
     color: var(--gwios-text-dim);
     font-size: 12px;
-    overflow-wrap: anywhere;
+}
+
+.gwios-person-actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 4px;
+}
+
+.gwios-person-tile .gwios-badge {
+    align-self: flex-start;
 }

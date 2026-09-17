@@ -61,4 +61,29 @@ public sealed class RenderingTests : BunitContext
         Assert.True(input.ClassList.Contains("wide"));
         Assert.Equal("title-input", input.GetAttribute("id"));
     }
+
+    [Fact]
+    public void RendersAValidField_WhileNoErrorMessageIsSet()
+    {
+        IRenderedComponent<GwiOSTextBoxUnderTest> textBox = Render<GwiOSTextBoxUnderTest>(parameters => parameters
+            .Add(component => component.Value, "Anna"));
+
+        IElement input = textBox.Find("input");
+        Assert.False(input.ClassList.Contains("gwios-input--invalid"));
+        Assert.False(input.HasAttribute("aria-invalid"));
+        Assert.False(input.HasAttribute("title"));
+    }
+
+    [Fact]
+    public void FlagsTheFieldAndShowsTheErrorAsTooltip_WhenAnErrorMessageIsSet()
+    {
+        IRenderedComponent<GwiOSTextBoxUnderTest> textBox = Render<GwiOSTextBoxUnderTest>(parameters => parameters
+            .Add(component => component.Value, "Anna")
+            .Add(component => component.ErrorMessage, "Dieser Name ist bereits vergeben"));
+
+        IElement input = textBox.Find("input");
+        Assert.True(input.ClassList.Contains("gwios-input--invalid"));
+        Assert.Equal("true", input.GetAttribute("aria-invalid"));
+        Assert.Equal("Dieser Name ist bereits vergeben", input.GetAttribute("title"));
+    }
 }

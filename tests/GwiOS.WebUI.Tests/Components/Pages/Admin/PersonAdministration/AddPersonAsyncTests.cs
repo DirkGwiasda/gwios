@@ -23,6 +23,16 @@ public sealed class AddPersonAsyncTests : PersonAdministrationProbe
     }
 
     [Fact]
+    public void UsesTheFirstWordOfTheNameAsShortName_WhenNoShortNameIsEntered()
+    {
+        IRenderedComponent<PersonAdministrationUnderTest> page = RenderPage();
+
+        AddPerson(page, " Anna Beispiel", "  ");
+
+        Assert.Equal("Anna", Assert.Single(PersonManager.Persons).ShortName);
+    }
+
+    [Fact]
     public void ShowsTheNewPersonAndClearsTheInputs()
     {
         IRenderedComponent<PersonAdministrationUnderTest> page = RenderPage();
