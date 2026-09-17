@@ -1,0 +1,12 @@
+# Partition table of the satellite. "nvs" and "phy_init" match the ESP-IDF default for a single app.
+# "config" holds the configuration of the individual satellite (name, token, Wi-Fi, GwiOS address). It is
+# separate from "nvs", which the Wi-Fi driver uses for its own data, so flashing a new configuration never
+# touches that data and flashing new firmware never touches the configuration. Flash-Satellite.ps1 reads
+# offset and size of "config" from this file.
+# "config" sits in front of the app so that its address never depends on the size of the app partition.
+# App partitions must start on a 64 KB boundary, hence the gap up to 0x20000.
+# Name,   Type, SubType, Offset,   Size
+nvs,      data, nvs,     0x9000,   0x6000
+phy_init, data, phy,     0xf000,   0x1000
+config,   data, nvs,     0x10000,  0x3000
+factory,  app,  factory, 0x20000,  0x1E0000

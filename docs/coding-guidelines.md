@@ -1,6 +1,7 @@
 # Coding Guidelines
 
-Binding for all code written in this repository. 
+Binding for the .NET projects in this repository. Code on other platforms — such as the satellite
+firmware under `src/GwiOS.Satellites` — follows the conventions of its own ecosystem.
 
 Rules are numbered so they can be cited in reviews and amended individually. New rules are
 added only on explicit instruction (R3).

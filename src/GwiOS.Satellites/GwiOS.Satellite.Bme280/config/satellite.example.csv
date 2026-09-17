@@ -1,0 +1,7 @@
+key,type,encoding,value
+satellite,namespace,,
+name,data,string,wohnzimmer
+token,data,string,DUMMY-token-aus-GwiOS-hier-eintragen-0123456789
+wifi_ssid,data,string,Mein WLAN
+wifi_password,data,string,geheimes-wlan-passwort
+gwios_url,data,string,https://webui.gwios.gwiasda.net
