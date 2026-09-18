@@ -227,6 +227,62 @@
     background: linear-gradient(90deg, #ffd056, #c99a1e);
 }
 
+.gwios-satellite-gauge--pressure .gwios-satellite-gauge-track {
+    position: relative;
+}
+
+/* Strich beim örtlichen Mittelwert, als Bezugspunkt für die Wetterentwicklung. */
+.gwios-satellite-pressure-mark {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    width: 2px;
+    margin-left: -1px;
+    border-radius: 1px;
+    background: var(--gwios-text-muted);
+}
+
+/* Der Verlauf erscheint als eigener Hinweis über dem Wert, gestaltet wie eine Kachel. */
+.gwios-satellite-pressure-value {
+    position: relative;
+    cursor: help;
+}
+
+.gwios-satellite-pressure-history {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    z-index: 5;
+    display: block;
+    visibility: hidden;
+    width: 200px;
+    max-width: 60vw;
+    padding: 10px;
+    border: 1px solid var(--gwios-border);
+    border-radius: var(--gwios-radius);
+    background: var(--gwios-bg-raised);
+    box-shadow: 0 0 18px rgba(0, 136, 255, 0.25);
+    opacity: 0;
+    transition: opacity 0.15s ease, visibility 0.15s ease;
+}
+
+.gwios-satellite-pressure-value:hover .gwios-satellite-pressure-history,
+.gwios-satellite-pressure-value:focus-visible .gwios-satellite-pressure-history {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* ::deep, weil das SVG aus GwiOSSparkLine kommt und die Regel sonst nicht greift. */
+.gwios-satellite-pressure-history ::deep .gwios-spark-line {
+    --gwios-spark-line-color: var(--gwios-warning);
+    height: 44px;
+}
+
+/* Der Pfeil steht neben "hPa" und übernimmt dessen Farbe und Größe. */
+.gwios-satellite-pressure-trend {
+    margin-left: 8px;
+}
+
 .gwios-satellite-footer {
     display: flex;
     align-items: center;

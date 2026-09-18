@@ -1,0 +1,12 @@
+/* Der Pfeil wächst mit der Schrift, in der er steht, und übernimmt ihre Farbe. */
+.gwios-trend-arrow {
+    display: inline-block;
+    width: 1.15em;
+    height: 1.15em;
+    vertical-align: -0.15em;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+}

@@ -1,0 +1,28 @@
+<svg class="gwios-trend-arrow"
+     viewBox="0 0 24 24"
+     role="img"
+     aria-label="@AriaLabel"
+     focusable="false">
+    <title>@AriaLabel</title>
+    <g transform="rotate(@RotationText 12 12)">
+        <line x1="3" y1="12" x2="19" y2="12" />
+        <polyline points="13,6 20,12 13,18" />
+    </g>
+</svg>
+
+@code {
+    /// <summary>
+    /// How far the arrow is turned clockwise, in degrees: 0 points right, -90 up, 90 down.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public double RotationDegrees { get; set; }
+
+    /// <summary>
+    /// What the arrow means, shown as tooltip and read by screen readers.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string AriaLabel { get; set; } = string.Empty;
+
+    private string RotationText
+        => RotationDegrees.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+}

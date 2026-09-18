@@ -54,8 +54,33 @@
         </div>
         <div class="gwios-satellite-gauge gwios-satellite-gauge--pressure">
             <span class="gwios-satellite-gauge-caption">Luftdruck</span>
-            <span class="gwios-satellite-gauge-value">@PressureText</span>
-            <div class="gwios-satellite-gauge-track"><span class="gwios-satellite-gauge-fill" style="@PressureBarStyle"></span></div>
+            <span class="gwios-satellite-gauge-value gwios-satellite-pressure-value" tabindex="0">
+                @PressureText
+                <span class="gwios-satellite-pressure-trend gwios-satellite-pressure-trend--@PressureTrendDirection"
+                      title="@PressureTrendTitle">
+                    @if (PressureTrendRotation is { } rotation)
+                    {
+                        <GwiOSTrendArrow RotationDegrees="rotation" AriaLabel="@PressureTrendTitle" />
+                    }
+                    else
+                    {
+                        @:·
+                    }
+                </span>
+                @if (PressurePoints.Count > 1)
+                {
+                    <span class="gwios-satellite-pressure-history" role="tooltip">
+                        <GwiOSSparkLine Points="PressurePoints"
+                                        MinimumSpan="MinimumPressureSpan"
+                                        AriaLabel="Verlauf des Luftdrucks"
+                                        Tooltip="@PressureHistoryTitle" />
+                    </span>
+                }
+            </span>
+            <div class="gwios-satellite-gauge-track" title="@PressureScaleTitle">
+                <span class="gwios-satellite-gauge-fill" style="@PressureBarStyle"></span>
+                <span class="gwios-satellite-pressure-mark" style="@PressureMarkStyle"></span>
+            </div>
         </div>
     </div>
 

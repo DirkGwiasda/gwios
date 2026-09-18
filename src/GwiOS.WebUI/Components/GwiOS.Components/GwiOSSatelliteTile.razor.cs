@@ -16,9 +16,21 @@ public partial class GwiOSSatelliteTile
     private const string HumidityQuantity = "humidity";
     private const string PressureQuantity = "pressure";
 
-    // The pressure bar spans 990 to 1040 hPa, the range of air pressure at the height of the house.
-    private const double PressureBarMinimum = 990;
-    private const double PressureBarRange = 50;
+    // The pressure bar spans the range a barometer covers; satellites report the pressure at their own height, so the
+    // mark sits at the local average instead of the 1013 hPa of a barometer reduced to sea level.
+    private const double PressureScaleMinimum = 954;
+    private const double PressureScaleMaximum = 1060;
+    private const double LocalAveragePressure = 996;
+
+    // The line chart spans at least this many hPa, so a quiet day looks flat.
+    private const double MinimumPressureSpan = 2;
+
+    // The tendency is the change over three hours, as in meteorology, derived from the values of the last three hours.
+    // Below half a hPa per three hours the pressure counts as steady, from two hPa as a strong change.
+    private static readonly TimeSpan PressureTendencyPeriod = TimeSpan.FromHours(3);
+    private static readonly TimeSpan MinimumPressureTendencySpan = TimeSpan.FromMinutes(10);
+    private const double SteadyPressureChange = 0.5;
+    private const double StrongPressureChange = 2;
 
     // The spark bars span at least this many kelvin, so noise of a tenth of a degree shows as a small step and not as a
     // jump from the bottom to the top.
@@ -65,7 +77,7 @@ public partial class GwiOSSatelliteTile
         => GetCurrentValue(TemperatureQuantity);
 
     private string TemperatureText
-        => Temperature is { } temperature ? $"{FormatOneDecimal(temperature)}°" : "––,–°";
+        => Temperature is { } temperature ? $"{FormatTwoDecimals(temperature)}°" : "––,––°";
 
     // The same thresholds as the design template: cold below 17 °C, comfortable up to 24 °C, warm up to 28 °C.
     private string HeatLevel
@@ -129,9 +141,120 @@ public partial class GwiOSSatelliteTile
         => Pressure is { } pressure ? $"{FormatOneDecimal(pressure)} hPa" : "–––– hPa";
 
     private string PressureBarStyle
-        => CreateWidthStyle(Pressure is { } pressure
-            ? Math.Clamp(Math.Round((pressure - PressureBarMinimum) / PressureBarRange * 100), 4, 100)
-            : 0);
+        => CreateWidthStyle(Pressure is { } pressure ? Math.Clamp(GetPressurePercent(pressure), 4, 100) : 0);
+
+    private string PressureMarkStyle
+        => string.Create(CultureInfo.InvariantCulture, $"left:{GetPressurePercent(LocalAveragePressure):0.#}%");
+
+    private string PressureScaleTitle
+        => $"Skala {FormatWholeNumber(PressureScaleMinimum)} bis {FormatWholeNumber(PressureScaleMaximum)} hPa, "
+            + $"Strich beim örtlichen Mittelwert {FormatWholeNumber(LocalAveragePressure)} hPa";
+
+    // The chart shows everything kept in memory, the long history plus the newer values of the short one. The long
+    // history is thinned out, so the points are placed by their time and not evenly.
+    private List<GwiOSSparkLinePoint> PressurePoints
+    {
+        get
+        {
+            List<MeasurementSample> samples = GetPressureSamples();
+            return samples.Count == 0
+                ? []
+                :
+                [
+                    .. samples.Select(sample => new GwiOSSparkLinePoint(
+                        (sample.MeasuredAt - samples[0].MeasuredAt).TotalMinutes,
+                        sample.Value))
+                ];
+        }
+    }
+
+    private string PressureHistoryTitle
+        => GetPressureSamples() is [{ } oldest, .., { } latest]
+            ? $"Verlauf von {FormatOneDecimal(oldest.Value)} bis {FormatOneDecimal(latest.Value)} hPa "
+                + $"über {DescribeSpan(latest.MeasuredAt - oldest.MeasuredAt)}"
+            : "Verlauf des Luftdrucks";
+
+    // The change over three hours, extrapolated from the values of the last three hours; null until the values cover
+    // at least ten minutes, because the sensor alone varies by about a tenth of a hPa.
+    private double? PressureTendency
+    {
+        get
+        {
+            List<MeasurementSample> samples =
+                [.. GetPressureSamples().Where(sample => sample.MeasuredAt >= Now - PressureTendencyPeriod)];
+            if (samples is not [{ } oldest, .., { } latest])
+            {
+                return null;
+            }
+
+            TimeSpan span = latest.MeasuredAt - oldest.MeasuredAt;
+            return span < MinimumPressureTendencySpan
+                ? null
+                : (latest.Value - oldest.Value) / span.TotalHours * PressureTendencyPeriod.TotalHours;
+        }
+    }
+
+    // The arrow points right when the pressure is steady, and turns up or down with the tendency.
+    private double? PressureTrendRotation
+        => PressureTrendDirection switch
+        {
+            "strong-up" => -90,
+            "up" => -45,
+            "down" => 45,
+            "strong-down" => 90,
+            "flat" => 0,
+            _ => null
+        };
+
+    private string PressureTrendDirection
+        => PressureTendency switch
+        {
+            null => "none",
+            >= StrongPressureChange => "strong-up",
+            >= SteadyPressureChange => "up",
+            <= -StrongPressureChange => "strong-down",
+            <= -SteadyPressureChange => "down",
+            _ => "flat"
+        };
+
+    private string PressureTrendTitle
+        => PressureTendency is { } tendency
+            ? $"{DescribeTendency()}: {FormatSignedOneDecimal(tendency)} hPa in 3 h"
+            : "Tendenz noch unbekannt, dafür fehlen Messwerte aus mindestens 10 Minuten";
+
+    private string DescribeTendency()
+        => PressureTrendDirection switch
+        {
+            "strong-up" => "stark steigend",
+            "up" => "steigend",
+            "down" => "fallend",
+            "strong-down" => "stark fallend",
+            _ => "gleichbleibend"
+        };
+
+    // Both histories are merged, because the long one thins out the older values and the short one holds the newest.
+    private List<MeasurementSample> GetPressureSamples()
+        => FindHistory(PressureQuantity) is { } history
+            ?
+            [
+                .. history.LongTermSamples
+                    .Concat(history.RecentSamples)
+                    .GroupBy(sample => sample.MeasuredAt)
+                    .Select(group => group.First())
+                    .OrderBy(sample => sample.MeasuredAt)
+            ]
+            : [];
+
+    private static double GetPressurePercent(double pressure)
+        => Math.Clamp(
+            (pressure - PressureScaleMinimum) / (PressureScaleMaximum - PressureScaleMinimum) * 100,
+            0,
+            100);
+
+    private static string DescribeSpan(TimeSpan span)
+        => span.TotalHours >= 1
+            ? $"{FormatOneDecimal(span.TotalHours)} h"
+            : $"{Math.Round(span.TotalMinutes, MidpointRounding.AwayFromZero)} min";
 
     // Values of an offline satellite are outdated, so they are not shown.
     private double? GetCurrentValue(string quantity)
@@ -154,7 +277,7 @@ public partial class GwiOSSatelliteTile
             : null;
 
     // Bar heights as in the design template: the lowest value gets 22 %, the highest 100 % of 32 px, and older bars
-    // fade out. Heights are based on the values as shown, rounded to one decimal, so equal values get equal bars; a
+    // fade out. Heights are based on the values as shown, rounded to two decimals, so equal values get equal bars; a
     // range narrower than the minimum span is widened around its middle. The tooltip of a bar names its value and the
     // time it was measured.
     private List<SparkBar> CreateSparkBars(MeasurementHistory history)
@@ -165,7 +288,7 @@ public partial class GwiOSSatelliteTile
             return [];
         }
 
-        List<double> shownValues = [.. samples.Select(sample => RoundToOneDecimal(sample.Value))];
+        List<double> shownValues = [.. samples.Select(sample => RoundToTwoDecimals(sample.Value))];
         (double lowest, double highest) = GetSparkRange(shownValues);
         return
         [
@@ -200,7 +323,7 @@ public partial class GwiOSSatelliteTile
     private string CreateSparkBarTitle(MeasurementSample sample, string unit)
     {
         DateTimeOffset measuredAt = TimeZoneInfo.ConvertTime(ToUtcOffset(sample.MeasuredAt), TimeProvider.LocalTimeZone);
-        return $"{FormatOneDecimal(sample.Value)} {unit} · {measuredAt.ToString("HH:mm:ss", CultureInfo.InvariantCulture)}";
+        return $"{FormatTwoDecimals(sample.Value)} {unit} · {measuredAt.ToString("HH:mm:ss", CultureInfo.InvariantCulture)}";
     }
 
     private static string CreateWidthStyle(double percent)
@@ -214,8 +337,19 @@ public partial class GwiOSSatelliteTile
         return vapourPressure * VapourDensityFactor / (temperatureCelsius + KelvinOffset);
     }
 
-    private static double RoundToOneDecimal(double value)
-        => Math.Round(value, 1, MidpointRounding.AwayFromZero);
+    private static double RoundToTwoDecimals(double value)
+        => Math.Round(value, 2, MidpointRounding.AwayFromZero);
+
+    // Temperatures are shown with the two decimals the sensor delivers, so the different heights of the spark bars
+    // can be read off their values.
+    private static string FormatTwoDecimals(double value)
+        => value.ToString("0.00", GermanCulture);
+
+    private static string FormatSignedOneDecimal(double value)
+        => value.ToString("+0.0;-0.0;0.0", GermanCulture);
+
+    private static string FormatWholeNumber(double value)
+        => value.ToString("0", GermanCulture);
 
     private static string FormatOneDecimal(double value)
         => value.ToString("0.0", GermanCulture);

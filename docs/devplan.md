@@ -292,7 +292,8 @@ Kleine Hardwaremodule, die Messwerte über das LAN an GwiOS schicken. Erstes Mod
       `BackgroundServices/MeasurementPollingService` (30 s, `Satellites:MeasurementPolling:IntervalSeconds`), Seite
       `/satelliten` mit unbekannten Satelliten, Admin-Seite `/admin/satelliten`, Komponenten `GwiOSSatelliteTile`,
       `GwiOSSatelliteAdminTile`, `GwiOSSatelliteCandidateTile`, `GwiOSSatelliteTokenDetails`, `GwiOSSignalStrength`,
-      `GwiOSTimeAgo`, `GwiOSReadOnlyField`; Navigation ergänzt. WebUI-Tests gesamt 342 grün
+      `GwiOSTimeAgo`, `GwiOSReadOnlyField`, `GwiOSSparkLine`,
+      `GwiOSTrendArrow`; Navigation ergänzt. WebUI-Tests gesamt 366 grün
 - [x] `Flash-Satellite.ps1` erzeugt ein Token, wenn die CSV keins enthält; Vorlage und README angepasst
 - [x] Satellit, Firmware 0.1.1 (17.09.2026): verbindet sich mit dem stärksten Zugangspunkt statt mit dem ersten
       gefundenen und loggt BSSID und Kanal; baut ohne Warnungen (1,0 MB), nach `dist/` exportiert
@@ -390,17 +391,33 @@ Kleine Hardwaremodule, die Messwerte über das LAN an GwiOS schicken. Erstes Mod
     „K / 1 h“ vergleicht den aktuellen Wert mit dem ältesten Wert der letzten Stunde aus beiden Verläufen.
   - Logging sparsam, weil jeder Eintrag in die Datenbank geht: kein Eintrag pro Ping oder Abholung, sondern nur bei
     „online“, neuen Kandidaten, Fehlern und Änderungen. Lesende Workflows loggen nicht.
-  - Höhe der Sparkline-Balken (Vorgabe von Dirk, 17.09.2026): berechnet aus dem auf 0,1 gerundeten Wert, damit gleich
-    angezeigte Werte gleich hohe Balken haben; die Skala umfasst mindestens 0,5 K um die Mitte der Werte. Vorher
-    wurde die Spanne der ungerundeten Werte immer auf die volle Höhe gestreckt, sodass Rauschen von 0,08 K wie ein
-    Sprung aussah.
+  - Temperatur mit zwei Nachkommastellen, in der Kachel und im Tooltip der Balken, so wie der Sensor sie liefert
+    (Vorgabe von Dirk, 17.09.2026); Trend, Luftdruck und absolute Feuchte bleiben bei einer Nachkommastelle.
+  - Höhe der Sparkline-Balken (Vorgabe von Dirk, 17.09.2026): berechnet aus dem Wert, wie er angezeigt wird (auf zwei
+    Nachkommastellen gerundet), damit gleich angezeigte Werte gleich hohe Balken haben; die Skala umfasst mindestens
+    0,5 K um die Mitte der Werte. Ohne Mindestspanne wurde Rauschen von 0,08 K auf die volle Höhe gestreckt und sah
+    wie ein Sprung aus.
+  - Luftdruck als Wetterhilfe (Vorgaben von Dirk, 17.09.2026): Der Balken deckt 954 bis 1060 hPa ab, mit einem Strich
+    beim örtlichen Mittelwert 996 hPa. Die Satelliten melden den Stationsdruck (etwa 140 m über Meereshöhe, also rund
+    17 hPa unter dem Meereshöhendruck), deshalb steht der Strich bei 996 und nicht bei den 1013 hPa eines auf
+    Meereshöhe umgerechneten Barometers. Das Liniendiagramm (`GwiOSSparkLine`, SVG, ohne
+    Bibliothek) erscheint beim Überfahren des hPa-Werts als Hinweis über der Kachel, gestaltet wie eine Kachel und
+    nur mit dem Diagramm darin (Vorgabe von Dirk, 17.09.2026). Es zeigt alle Werte im Speicher, also gut 8 Stunden; die Punkte liegen nach ihrer Messzeit, zu viele werden
+    gleichmäßig ausgedünnt (höchstens 60), die Skala umfasst mindestens 2 hPa. Der Pfeil mit der Tendenz steht rechts neben
+    `hPa` in derselben Farbe und Größe (Vorgabe von Dirk, 17.09.2026; neben dem Diagramm war er zu klein), mit der
+    Tendenz über 3 Stunden, wie in der Meteorologie übliche Stufen: unter 0,5 hPa gleichbleibend
+    (waagerecht), bis 2 hPa steigend/fallend (45° schräg), darüber stark (senkrecht). Gezeichnet wird er als eigene
+    Komponente `GwiOSTrendArrow` (SVG, Strich mit Spitze, 1,15 em hoch, in der Farbe der Schrift), weil die
+    Pfeil-Schriftzeichen in Orbitron winzig ausfielen (Vorgabe von Dirk, 17.09.2026). Sie wird aus den Werten der letzten 3 Stunden auf 3 Stunden
+    hochgerechnet und bleibt offen (·), solange die Werte keine 10 Minuten abdecken (der Sensor schwankt um etwa
+    0,1 hPa). Der Tooltip nennt die Tendenz in Worten und in hPa.
   - Hinter der relativen Feuchte steht in Klammern die absolute Feuchte, z. B. `44 % (8,8 g/m³)` (Vorgabe von Dirk,
     17.09.2026). Der BME280 misst nur die relative Feuchte; die absolute wird aus Temperatur (°C) und relativer
     Feuchte mit der Magnus-Formel berechnet (auf etwa 0,1 g/m³ genau zwischen -30 und 35 °C). Ohne Temperatur entfällt
     sie. Sie ist anders als die relative Feuchte kaum von der Eigenwärme des ESP32 betroffen. Berechnet wird sie wie
     der Trend in der Kachel selbst, weil sie nur der Anzeige dient.
   - Jeder Balken der Sparkline nennt als Tooltip Wert, Einheit und Messzeit in lokaler Zeit, z. B.
-    `22,4 °C · 14:32:10` (Vorgabe von Dirk, 17.09.2026).
+    `22,44 °C · 14:32:10` (Vorgabe von Dirk, 17.09.2026).
   - Abweichungen von der Vorlage: In der Kachel steht „Name · Board“ statt „SAT-Kennung · Chip“ (beides gibt es
     nicht); „Neues Token“ verlangt wie „Löschen“ einen zweiten Klick, weil das alte Token sofort ungültig wird; ein
     Satellit ohne Token trägt die Plakette „kein Token“; die Checkbox „Automatisch aktualisieren“ und der Bereich
@@ -567,5 +584,8 @@ Kleine Hardwaremodule, die Messwerte über das LAN an GwiOS schicken. Erstes Mod
 - Die Ping-API hat keine Begrenzung der Anfragerate; Kandidaten sind auf 20 begrenzt. Reicht das, falls die WebUI
   aus dem Internet erreichbar ist?
 - Wer darf die Seiten „Satelliten“ und „Satellitenverwaltung“ sehen? Derzeit genügt die Anmeldung.
+- Der Strich beim örtlichen Mittelwert steht fest auf 996 hPa. Soll er je Satellit einstellbar werden, oder soll GwiOS
+  den Druck über eine Höhe je Satellit auf Meereshöhe umrechnen (dann wären 1013 hPa und der Vergleich mit dem
+  Wetterbericht möglich)?
 - Ist `webui.gwios.gwiasda.net` aus dem Internet erreichbar oder nur im LAN? (Für den Ping ist HTTPS
   ohnehin beschlossen; die Antwort bestimmt, wie streng der Endpunkt gegen Missbrauch zu schützen ist.)

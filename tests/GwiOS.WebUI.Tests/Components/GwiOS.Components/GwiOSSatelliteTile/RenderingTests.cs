@@ -43,10 +43,10 @@ public sealed class RenderingTests : BunitContext
         IRenderedComponent<GwiOSSatelliteTileUnderTest> tile = RenderTile(_entries.CreateOnline("keller", temperatures: [22.0, 22.44]));
 
         Assert.Equal("Online", tile.Find(".gwios-badge--success").TextContent);
-        Assert.Equal("22,4°", tile.Find(".gwios-satellite-temperature-value").TextContent);
+        Assert.Equal("22,44°", tile.Find(".gwios-satellite-temperature-value").TextContent);
         Assert.Equal("44 %", tile.Find(".gwios-satellite-gauge--humidity .gwios-satellite-gauge-value").FirstChild!.TextContent.Trim());
         Assert.Equal("(8,8 g/m³)", tile.Find(".gwios-satellite-gauge-extra").TextContent);
-        Assert.Equal("1014,2 hPa", tile.Find(".gwios-satellite-gauge--pressure .gwios-satellite-gauge-value").TextContent);
+        Assert.Equal("1014,2 hPa", tile.Find(".gwios-satellite-gauge--pressure .gwios-satellite-gauge-value").FirstChild!.TextContent.Trim());
         Assert.Equal("-52 dBm · 192.168.0.41", tile.Find(".gwios-satellite-network").TextContent);
         Assert.Equal("vor 4 s", tile.Find(".gwios-satellite-seen").TextContent.Trim());
         Assert.Equal("14.07.2026 10:29:56", tile.Find(".gwios-satellite-stamp time").TextContent);
@@ -139,10 +139,20 @@ public sealed class RenderingTests : BunitContext
     [Fact]
     public void DrawsEqualBarsInTheMiddle_WhenTheValuesAreEqualAsShown()
     {
-        IRenderedComponent<GwiOSSatelliteTileUnderTest> tile = RenderTile(_entries.CreateOnline("keller", temperatures: [23.76, 23.84, 23.8]));
+        IRenderedComponent<GwiOSSatelliteTileUnderTest> tile = RenderTile(_entries.CreateOnline("keller", temperatures: [23.801, 23.799, 23.8]));
 
         Assert.Equal(
             ["height:20px", "height:20px", "height:20px"],
+            tile.FindAll(".gwios-satellite-spark-bar").Select(bar => bar.GetAttribute("style")!.Split(';')[0]));
+    }
+
+    [Fact]
+    public void DrawsSmallSteps_WhenTheValuesDifferInTheSecondDecimal()
+    {
+        IRenderedComponent<GwiOSSatelliteTileUnderTest> tile = RenderTile(_entries.CreateOnline("keller", temperatures: [23.76, 23.84, 23.8]));
+
+        Assert.Equal(
+            ["height:18px", "height:22px", "height:20px"],
             tile.FindAll(".gwios-satellite-spark-bar").Select(bar => bar.GetAttribute("style")!.Split(';')[0]));
     }
 
@@ -166,7 +176,7 @@ public sealed class RenderingTests : BunitContext
         IRenderedComponent<GwiOSSatelliteTileUnderTest> tile = RenderTile(_entries.CreateOnline("keller", temperatures: [21.96, 22.44]));
 
         Assert.Equal(
-            ["22,0 °C · 12:29:30", "22,4 °C · 12:30:00"],
+            ["21,96 °C · 12:29:30", "22,44 °C · 12:30:00"],
             tile.FindAll(".gwios-satellite-spark-bar").Select(bar => bar.GetAttribute("title")));
     }
 
@@ -177,11 +187,11 @@ public sealed class RenderingTests : BunitContext
 
         Assert.Contains("gwios-satellite-tile--offline", tile.Find(".gwios-satellite-tile").ClassList);
         Assert.Equal("Offline", tile.Find(".gwios-badge--danger").TextContent);
-        Assert.Equal("––,–°", tile.Find(".gwios-satellite-temperature-value").TextContent);
+        Assert.Equal("––,––°", tile.Find(".gwios-satellite-temperature-value").TextContent);
         Assert.Equal("keine Daten", tile.Find(".gwios-satellite-trend").TextContent);
         Assert.Equal("–– %", tile.Find(".gwios-satellite-gauge--humidity .gwios-satellite-gauge-value").TextContent.Trim());
         Assert.Empty(tile.FindAll(".gwios-satellite-gauge-extra"));
-        Assert.Equal("–––– hPa", tile.Find(".gwios-satellite-gauge--pressure .gwios-satellite-gauge-value").TextContent);
+        Assert.Equal("–––– hPa", tile.Find(".gwios-satellite-gauge--pressure .gwios-satellite-gauge-value").FirstChild!.TextContent.Trim());
         Assert.Equal("zuletzt vor 6 min", tile.Find(".gwios-satellite-seen").TextContent.Trim());
         Assert.Empty(tile.FindAll(".gwios-signal-bar--on"));
     }
@@ -205,7 +215,116 @@ public sealed class RenderingTests : BunitContext
         IRenderedComponent<GwiOSSatelliteTileUnderTest> tile = RenderTile(_entries.CreateOnline("keller"));
 
         Assert.Equal("width:44.4%", tile.Find(".gwios-satellite-gauge--humidity .gwios-satellite-gauge-fill").GetAttribute("style"));
-        Assert.Equal("width:48%", tile.Find(".gwios-satellite-gauge--pressure .gwios-satellite-gauge-fill").GetAttribute("style"));
+        Assert.Equal("width:56.8%", tile.Find(".gwios-satellite-gauge--pressure .gwios-satellite-gauge-fill").GetAttribute("style"));
+    }
+
+    [Fact]
+    public void PutsTheMarkOfTheLocalAveragePressureOnTheScaleFrom954To1060()
+    {
+        IRenderedComponent<GwiOSSatelliteTileUnderTest> tile = RenderTile(_entries.CreateOnline("keller"));
+
+        Assert.Equal("left:39.6%", tile.Find(".gwios-satellite-pressure-mark").GetAttribute("style"));
+        Assert.Equal(
+            "Skala 954 bis 1060 hPa, Strich beim örtlichen Mittelwert 996 hPa",
+            tile.Find(".gwios-satellite-gauge--pressure .gwios-satellite-gauge-track").GetAttribute("title"));
+    }
+
+    [Fact]
+    public void DrawsThePressureHistoryFromBothHistoriesWithItsSpanAsTooltip()
+    {
+        SatelliteOverviewEntry entry = _entries.CreateOnline("keller");
+        AddPressureHistory(entry, [(-180, 1002.0), (-120, 1001.0), (-60, 1000.0)]);
+
+        IRenderedComponent<GwiOSSatelliteTileUnderTest> tile = RenderTile(entry);
+
+        Assert.Equal("0,19.55 33.33,21.03 66.67,22.5 100,1.5", tile.Find(".gwios-satellite-pressure-history polyline").GetAttribute("points"));
+        Assert.Equal(
+            "Verlauf von 1002,0 bis 1014,2 hPa über 3,0 h",
+            tile.Find(".gwios-satellite-pressure-history svg title").TextContent);
+    }
+
+    [Fact]
+    public void KeepsThePressureHistoryInTheHintOfThePressureValue()
+    {
+        SatelliteOverviewEntry entry = _entries.CreateOnline("keller");
+        AddPressureHistory(entry, [(-60, 1000.0)]);
+
+        IRenderedComponent<GwiOSSatelliteTileUnderTest> tile = RenderTile(entry);
+
+        AngleSharp.Dom.IElement history = tile.Find(".gwios-satellite-pressure-value .gwios-satellite-pressure-history");
+        Assert.Equal("tooltip", history.GetAttribute("role"));
+        Assert.Single(history.QuerySelectorAll("svg.gwios-spark-line"));
+        Assert.Equal("0", tile.Find(".gwios-satellite-pressure-value").GetAttribute("tabindex"));
+    }
+
+    [Fact]
+    public void DrawsNoPressureHistory_WhenThereIsOnlyOneValue()
+    {
+        IRenderedComponent<GwiOSSatelliteTileUnderTest> tile = RenderTile(_entries.CreateOnline("keller"));
+
+        Assert.Empty(tile.FindAll(".gwios-satellite-pressure-history"));
+    }
+
+    [Theory]
+    [InlineData(1011.0, "-90", "strong-up", "stark steigend: +3,2 hPa in 3 h")]
+    [InlineData(1013.5, "-45", "up", "steigend: +0,7 hPa in 3 h")]
+    [InlineData(1014.24, "0", "flat", "gleichbleibend: 0,0 hPa in 3 h")]
+    [InlineData(1015.0, "45", "down", "fallend: -0,8 hPa in 3 h")]
+    [InlineData(1017.0, "90", "strong-down", "stark fallend: -2,8 hPa in 3 h")]
+    public void ShowsTheTendencyOverThreeHoursAsATurnedArrow(
+        double pressureThreeHoursAgo,
+        string expectedRotation,
+        string expectedDirection,
+        string expectedTitle)
+    {
+        SatelliteOverviewEntry entry = _entries.CreateOnline("keller");
+        AddPressureHistory(entry, [(-180, pressureThreeHoursAgo)]);
+
+        IRenderedComponent<GwiOSSatelliteTileUnderTest> tile = RenderTile(entry);
+
+        AngleSharp.Dom.IElement trend = tile.Find(".gwios-satellite-pressure-trend");
+        Assert.Contains($"gwios-satellite-pressure-trend--{expectedDirection}", trend.ClassList);
+        Assert.Equal(expectedTitle, trend.GetAttribute("title"));
+        Assert.Equal($"rotate({expectedRotation} 12 12)", trend.QuerySelector(".gwios-trend-arrow g")!.GetAttribute("transform"));
+        Assert.Equal(expectedTitle, trend.QuerySelector(".gwios-trend-arrow")!.GetAttribute("aria-label"));
+    }
+
+    [Fact]
+    public void LeavesTheTendencyOpen_WhenTheValuesCoverLessThanTenMinutes()
+    {
+        SatelliteOverviewEntry entry = _entries.CreateOnline("keller");
+        AddPressureHistory(entry, [(-5, 1000.0)]);
+
+        IRenderedComponent<GwiOSSatelliteTileUnderTest> tile = RenderTile(entry);
+
+        AngleSharp.Dom.IElement trend = tile.Find(".gwios-satellite-pressure-trend");
+        Assert.Equal("·", trend.TextContent.Trim());
+        Assert.Empty(trend.QuerySelectorAll(".gwios-trend-arrow"));
+        Assert.Contains("gwios-satellite-pressure-trend--none", trend.ClassList);
+        Assert.Equal(
+            "Tendenz noch unbekannt, dafür fehlen Messwerte aus mindestens 10 Minuten",
+            trend.GetAttribute("title"));
+    }
+
+    [Fact]
+    public void LeavesOutValuesOlderThanThreeHoursFromTheTendency()
+    {
+        SatelliteOverviewEntry entry = _entries.CreateOnline("keller");
+        AddPressureHistory(entry, [(-300, 900.0), (-60, 1013.24)]);
+
+        IRenderedComponent<GwiOSSatelliteTileUnderTest> tile = RenderTile(entry);
+
+        Assert.Equal("stark steigend: +3,0 hPa in 3 h", tile.Find(".gwios-satellite-pressure-trend").GetAttribute("title"));
+    }
+
+    // Adds the given values to the long history of the pressure, each measured the given minutes before now.
+    private static void AddPressureHistory(SatelliteOverviewEntry entry, (int Minutes, double Pressure)[] values)
+    {
+        MeasurementHistory pressure = entry.Histories.Single(history => history.Quantity == "pressure");
+        pressure.LongTermSamples.AddRange(values.Select(value => new MeasurementSample(
+            value.Pressure,
+            TestSatelliteEntries.Now.AddMinutes(value.Minutes),
+            TestSatelliteEntries.Now.AddMinutes(value.Minutes))));
     }
 
     private IRenderedComponent<GwiOSSatelliteTileUnderTest> RenderTile(SatelliteOverviewEntry entry)
