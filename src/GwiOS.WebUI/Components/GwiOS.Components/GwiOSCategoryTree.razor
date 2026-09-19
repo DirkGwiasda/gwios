@@ -1,0 +1,46 @@
+@foreach (Category category in Categories.Where(candidate => candidate.ParentId == ParentId).OrderBy(candidate => candidate.Name))
+{
+    bool hasChildren = HasChildren(category);
+    bool isCollapsed = CollapsedCategoryIds.Contains(category.Id);
+    <div class="gwios-category-row" style="@GetIndentStyle(Depth)">
+        <button type="button"
+                class="gwios-icon-button gwios-category-toggle"
+                disabled="@(!hasChildren)"
+                aria-label="@(isCollapsed ? "Aufklappen" : "Zuklappen")"
+                @onclick="() => OnToggleCollapse.InvokeAsync(category.Id)">
+            @(hasChildren ? (isCollapsed ? "▸" : "▾") : "·")
+        </button>
+        <span class="gwios-category-dot" style="background-color: @ResolveColor(category);"></span>
+        <span class="gwios-category-name">@category.Name</span>
+        <span class="gwios-category-sum">@FormatSum(category)</span>
+        <div class="gwios-category-actions">
+            <button type="button"
+                    class="gwios-icon-button"
+                    title="Unterkategorie anlegen"
+                    @onclick="() => OnAddChild.InvokeAsync(category.Id)">
+                +
+            </button>
+            <button type="button" class="gwios-icon-button" title="Bearbeiten" @onclick="() => OnEdit.InvokeAsync(category)">
+                ✎
+            </button>
+            <GwiOSConfirmButton Title="Löschen"
+                                CssClass="gwios-icon-button"
+                                ConfirmCssClass="gwios-icon-button gwios-icon-button--danger"
+                                OnConfirmed="() => OnDelete.InvokeAsync(category)">
+                ✕
+            </GwiOSConfirmButton>
+        </div>
+    </div>
+    @if (!isCollapsed)
+    {
+        <GwiOSCategoryTree Categories="Categories"
+                           Sums="Sums"
+                           CollapsedCategoryIds="CollapsedCategoryIds"
+                           OnToggleCollapse="OnToggleCollapse"
+                           OnAddChild="OnAddChild"
+                           OnEdit="OnEdit"
+                           OnDelete="OnDelete"
+                           ParentId="category.Id"
+                           Depth="Depth + 1" />
+    }
+}

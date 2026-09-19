@@ -1,0 +1,19 @@
+.gwios-dashboard-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.gwios-dashboard-toolbar-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+
+.gwios-dialog-intro {
+    margin: 0 0 4px;
+    color: var(--gwios-text-muted);
+    font-size: 13.5px;
+}

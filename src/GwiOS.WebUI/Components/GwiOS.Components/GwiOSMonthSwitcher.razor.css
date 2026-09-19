@@ -1,0 +1,15 @@
+.gwios-month-switcher {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.gwios-month-switcher-label {
+    font-family: var(--gwios-font-display);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--gwios-text);
+    min-width: 190px;
+    text-align: center;
+}

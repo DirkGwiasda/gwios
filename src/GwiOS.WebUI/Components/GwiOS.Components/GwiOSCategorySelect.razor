@@ -1,0 +1,10 @@
+<select class="gwios-input" aria-label="@AriaLabel" value="@SelectedValue" @onchange="OnChangeAsync" @attributes="AdditionalAttributes">
+    @if (EmptyOptionLabel is not null)
+    {
+        <option value="">@EmptyOptionLabel</option>
+    }
+    @foreach (CategoryOption option in Options)
+    {
+        <option value="@option.Category.Id">@option.Label</option>
+    }
+</select>

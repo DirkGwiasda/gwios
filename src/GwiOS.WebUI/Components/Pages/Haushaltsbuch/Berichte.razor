@@ -1,0 +1,56 @@
+@page "/haushaltsbuch/berichte"
+
+<PageTitle>Berichte · Haushaltsbuch · gwi-os</PageTitle>
+
+<div class="gwios-page">
+    <h1>Haushaltsbuch</h1>
+
+    <div class="gwios-panel gwios-berichte-toolbar">
+        <span class="gwios-berichte-toolbar-label">Zeitraum</span>
+        <GwiOSPillGroup Items="RangeItems" SelectedItem="@SelectedRangeItem" SelectedItemChanged="SelectRangeAsync" AriaLabel="Zeitraum" />
+        <span class="gwios-berichte-toolbar-info">@RangeInfo</span>
+    </div>
+
+    <div class="gwios-tile-grid gwios-tile-grid--wide">
+        <GwiOSSection Title="Soll / Ist" IsEmpty="SollIstRows.Count == 0" EmptyText="Keine Fixkosten oder Ausgaben in diesem Zeitraum.">
+            <p class="gwios-berichte-hint">Geplante Fixkosten gegen tatsächliche Ausgaben</p>
+            <div class="gwios-berichte-legend">
+                <span class="gwios-berichte-legend-item">
+                    <span class="gwios-berichte-legend-swatch gwios-berichte-legend-swatch--plan"></span>Plan
+                </span>
+                <span class="gwios-berichte-legend-item">
+                    <span class="gwios-berichte-legend-swatch gwios-berichte-legend-swatch--actual"></span>Ist
+                </span>
+            </div>
+            <div class="gwios-stack">
+                @foreach (SollIstRow row in SollIstRows)
+                {
+                    <div class="gwios-soll-ist-row">
+                        <div class="gwios-soll-ist-row-header">
+                            <span>@row.Label</span>
+                            <span class="gwios-table-secondary">
+                                @FormatAmount(row.Plan) / <span class="@(row.Actual > row.Plan ? "gwios-amount gwios-amount--danger" : "gwios-amount gwios-amount--success")">@FormatAmount(row.Actual)</span>
+                            </span>
+                        </div>
+                        <div class="gwios-soll-ist-bar">
+                            <span class="gwios-soll-ist-bar-fill gwios-soll-ist-bar-fill--plan" style="width: @(row.PlanPercentage)%;"></span>
+                        </div>
+                        <div class="gwios-soll-ist-bar">
+                            <span class="gwios-soll-ist-bar-fill gwios-soll-ist-bar-fill--actual" style="width: @(row.ActualPercentage)%;"></span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </GwiOSSection>
+
+        <GwiOSSection Title="Ausgaben nach Kategorie" IsEmpty="DonutSegments.Count == 0" EmptyText="Keine Ausgaben in diesem Zeitraum.">
+            <p class="gwios-berichte-hint">@DonutHint</p>
+            <GwiOSDonutChart Segments="DonutSegments" OnSegmentClick="DrillIntoCategory" />
+        </GwiOSSection>
+
+        <GwiOSSection Title="Monatsverlauf" IsEmpty="false">
+            <p class="gwios-berichte-hint">Einnahmen gegen Ausgaben</p>
+            <GwiOSLineChart Series="LineSeries" Labels="LineLabels" />
+        </GwiOSSection>
+    </div>
+</div>

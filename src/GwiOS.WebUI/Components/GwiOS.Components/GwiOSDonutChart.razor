@@ -1,0 +1,19 @@
+<div class="gwios-donut-chart">
+    <div class="gwios-donut-chart-circle">
+        <div class="gwios-donut-chart-gradient" style="background: @GradientStyle;"></div>
+        <div class="gwios-donut-chart-center">
+            <span class="gwios-donut-chart-center-label">Gesamt</span>
+            <span class="gwios-donut-chart-center-value">@FormatValue(Total)</span>
+        </div>
+    </div>
+    <div class="gwios-donut-chart-legend">
+        @foreach (GwiOSDonutSegment segment in Segments)
+        {
+            <div class="gwios-donut-chart-legend-item" @onclick="() => OnSegmentClick.InvokeAsync(segment.Id)">
+                <span class="gwios-donut-chart-legend-dot" style="background-color: @segment.Color;"></span>
+                <span class="gwios-donut-chart-legend-label">@segment.Label</span>
+                <span class="gwios-donut-chart-legend-value">@FormatValue(segment.Value) · @FormatPercentage(segment.Value)</span>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,173 @@
+@page "/haushaltsbuch/dashboard"
+
+<PageTitle>Dashboard · Haushaltsbuch · gwi-os</PageTitle>
+
+<div class="gwios-page">
+    <h1>Haushaltsbuch</h1>
+
+    <div class="gwios-panel gwios-dashboard-toolbar">
+        <GwiOSMonthSwitcher Month="_month" MonthChanged="ChangeMonthAsync" />
+        <div class="gwios-dashboard-toolbar-actions">
+            <button type="button" class="gwios-button" @onclick="() => OpenNewBooking()">+ Neue Buchung</button>
+            <button type="button"
+                    class="gwios-button gwios-button--secondary"
+                    disabled="@(_proposedBookings.Count == 0)"
+                    @onclick="GenerateFixBookingsAsync">
+                @(_proposedBookings.Count == 0 ? "Fixbuchungen vollständig" : $"Fixbuchungen generieren ({_proposedBookings.Count})")
+            </button>
+        </div>
+    </div>
+
+    <div class="gwios-tile-grid">
+        <GwiOSKpiTile Label="Gesamteinnahmen"
+                      Value="@FormatAmount(IncomeBooked + IncomePending)"
+                      Accent="GwiOSKpiAccent.Success"
+                      FooterLeft="@($"Gebucht {FormatAmount(IncomeBooked)}")"
+                      FooterRight="@(IncomePending > 0 ? $"+ {FormatAmount(IncomePending)} offen" : "nichts offen")"
+                      IsFooterRightWarning="IncomePending > 0" />
+        <GwiOSKpiTile Label="Gesamtausgaben"
+                      Value="@FormatAmount(ExpenseBooked + ExpensePending)"
+                      Accent="GwiOSKpiAccent.Danger"
+                      FooterLeft="@($"Gebucht {FormatAmount(ExpenseBooked)}")"
+                      FooterRight="@(ExpensePending > 0 ? $"+ {FormatAmount(ExpensePending)} offen" : "nichts offen")"
+                      IsFooterRightWarning="ExpensePending > 0" />
+        <GwiOSKpiTile Label="Verfügbarer Saldo"
+                      Value="@FormatSignedAmount(Balance)"
+                      Accent="@(Balance >= 0 ? GwiOSKpiAccent.Primary : GwiOSKpiAccent.Danger)"
+                      FooterLeft="Nur gebucht"
+                      FooterRight="@FormatSignedAmount(BookedBalance)" />
+    </div>
+
+    <div class="gwios-table-panel">
+        <table class="gwios-table">
+            <thead>
+                <tr>
+                    <th scope="col">Datum</th>
+                    <th scope="col">Typ</th>
+                    <th scope="col">Kategorie</th>
+                    <th scope="col">Beschreibung</th>
+                    <th scope="col">Betrag</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (Booking booking in _bookings)
+                {
+                    <tr @key="booking.Id">
+                        <td data-label="Datum" class="gwios-table-secondary">@booking.Date.ToString("dd.MM.yyyy")</td>
+                        <td data-label="Typ">
+                            <span class="gwios-badge @(booking.Type == CategoryType.Income ? "gwios-badge--success" : "gwios-badge--danger")">
+                                @(booking.Type == CategoryType.Income ? "Einnahme" : "Ausgabe")
+                            </span>
+                        </td>
+                        <td data-label="Kategorie">@GetCategoryPath(booking.CategoryId)</td>
+                        <td data-label="Beschreibung">@(booking.Description ?? "—")</td>
+                        <td data-label="Betrag" class="@GetAmountClass(booking.Type)">
+                            @FormatSignedAmount(booking.Type == CategoryType.Income ? booking.Amount : -booking.Amount)
+                        </td>
+                        <td data-label="Status">
+                            <span class="gwios-badge @(booking.Status == BookingStatus.Booked ? "" : "gwios-badge--warning")">
+                                @(booking.Status == BookingStatus.Booked ? "Gebucht" : "Ausstehend")
+                            </span>
+                        </td>
+                        <td data-label="Aktionen" class="gwios-table-actions">
+                            <button type="button" class="gwios-icon-button" title="Bearbeiten" @onclick="() => OpenEditBooking(booking)">
+                                ✎
+                            </button>
+                            <GwiOSConfirmButton Title="Löschen"
+                                                CssClass="gwios-icon-button"
+                                                ConfirmCssClass="gwios-icon-button gwios-icon-button--danger"
+                                                OnConfirmed="() => DeleteBookingAsync(booking)">
+                                ✕
+                            </GwiOSConfirmButton>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (_bookings.Count == 0)
+        {
+            <p class="gwios-empty">Für diesen Monat sind noch keine Buchungen erfasst.</p>
+        }
+    </div>
+</div>
+
+@if (_editedBooking is not null)
+{
+    <GwiOSDialog Title="@DialogTitle" CanClose="!_isSaving" OnClose="CloseDialog">
+        <ChildContent>
+            <div class="gwios-form-field">
+                <label class="gwios-form-field-label">Typ</label>
+                <GwiOSPillGroup Items="@(["Einnahme", "Ausgabe"])"
+                                SelectedItem="@(_editType == CategoryType.Income ? "Einnahme" : "Ausgabe")"
+                                SelectedItemChanged="SelectEditType"
+                                AriaLabel="Typ" />
+            </div>
+            <div class="gwios-form-grid">
+                <GwiOSFormField Label="Datum" InputId="booking-edit-date">
+                    <GwiOSDateBox Value="_editDate" ValueChanged="date => _editDate = date" AriaLabel="Datum" />
+                </GwiOSFormField>
+                <GwiOSFormField Label="Betrag" InputId="booking-edit-amount" IsRequired="true" ErrorMessage="@_amountError">
+                    <input id="booking-edit-amount" type="number" step="0.01" min="0" class="gwios-input" @bind="_editAmount" />
+                </GwiOSFormField>
+            </div>
+            <GwiOSFormField Label="Kategorie" InputId="booking-edit-category" ErrorMessage="@_categoryError">
+                <GwiOSCategorySelect id="booking-edit-category"
+                                     Categories="_categories"
+                                     Type="_editType"
+                                     SelectedCategoryId="_editCategoryId"
+                                     SelectedCategoryIdChanged="id => _editCategoryId = id"
+                                     AriaLabel="Kategorie" />
+            </GwiOSFormField>
+            <GwiOSFormField Label="Beschreibung" InputId="booking-edit-description">
+                <GwiOSTextBox id="booking-edit-description"
+                              @bind-Value="_editDescription"
+                              Placeholder="z. B. Wocheneinkauf"
+                              MaxLength="200"
+                              OnEnter="SaveBookingAsync" />
+            </GwiOSFormField>
+            <div class="gwios-form-field">
+                <label class="gwios-form-field-label">Status</label>
+                <GwiOSPillGroup Items="@(["Gebucht", "Ausstehend"])"
+                                SelectedItem="@(_editStatus == BookingStatus.Booked ? "Gebucht" : "Ausstehend")"
+                                SelectedItemChanged="SelectEditStatus"
+                                AriaLabel="Status" />
+            </div>
+        </ChildContent>
+        <Actions>
+            <button type="button" class="gwios-button gwios-button--secondary" disabled="@_isSaving" @onclick="CloseDialog">
+                Abbrechen
+            </button>
+            <button type="button" class="gwios-button" disabled="@_isSaving" @onclick="SaveBookingAsync">
+                @(_isSaving ? "Speichert …" : "Speichern")
+            </button>
+        </Actions>
+    </GwiOSDialog>
+}
+
+@if (_showReviewPopup)
+{
+    <GwiOSDialog Title="@($"Fixposten für {MonthLabel} prüfen")" CanClose="false">
+        <ChildContent>
+            <p class="gwios-dialog-intro">
+                Diese wiederkehrenden Posten sind für @MonthLabel fällig. Wähle aus, was als Buchung übernommen
+                werden soll.
+            </p>
+            <div class="gwios-stack">
+                @foreach (ProposedBooking proposal in _proposedBookings)
+                {
+                    <label class="gwios-checkbox">
+                        <input type="checkbox"
+                               checked="@_selectedProposals.Contains(proposal)"
+                               @onchange="eventArgs => ToggleProposal(proposal, (bool)eventArgs.Value!)" />
+                        @proposal.Name — @FormatAmount(proposal.Amount) am @proposal.Date.ToString("dd.MM.yyyy")
+                    </label>
+                }
+            </div>
+        </ChildContent>
+        <Actions>
+            <button type="button" class="gwios-button" @onclick="ConfirmReviewAsync">Übernehmen</button>
+        </Actions>
+    </GwiOSDialog>
+}

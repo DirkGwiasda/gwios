@@ -1,0 +1,149 @@
+@page "/haushaltsbuch/fixkosten"
+
+<PageTitle>Fixkosten · Haushaltsbuch · gwi-os</PageTitle>
+
+<div class="gwios-page">
+    <h1>Haushaltsbuch</h1>
+
+    <div class="gwios-toolbar">
+        <GwiOSPillGroup Items="TabItems" SelectedItem="@SelectedTabItem" SelectedItemChanged="SelectTab" AriaLabel="Art" />
+        <button type="button" class="gwios-button" @onclick="() => OpenNewItem()">+ Neuer wiederkehrender Posten</button>
+    </div>
+
+    <div class="gwios-panel gwios-fixkosten-sum-panel">
+        <span class="gwios-fixkosten-sum-label">Monatliches Äquivalent (aktiv)</span>
+        <span class="gwios-fixkosten-sum-value">@FormatAmount(ActiveMonthlyEquivalentSum)</span>
+        <span class="gwios-fixkosten-sum-hint">Quartals- und Jahresposten sind auf den Monat geglättet.</span>
+    </div>
+
+    <div class="gwios-table-panel">
+        <table class="gwios-table">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Kategorie</th>
+                    <th scope="col">Betrag</th>
+                    <th scope="col">Turnus</th>
+                    <th scope="col">Fälligkeit</th>
+                    <th scope="col">pro Monat</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (RecurringItem item in FilteredItems)
+                {
+                    <tr @key="item.Id">
+                        <td data-label="Name">@item.Name</td>
+                        <td data-label="Kategorie">@GetCategoryPath(item.CategoryId)</td>
+                        <td data-label="Betrag" class="@GetAmountClass(item.Type)">@FormatAmount(item.Amount)</td>
+                        <td data-label="Turnus">@GetIntervalLabel(item.Interval)</td>
+                        <td data-label="Fälligkeit">@GetDueLabel(item)</td>
+                        <td data-label="pro Monat" class="gwios-table-secondary">@FormatAmount(GetMonthlyEquivalent(item))</td>
+                        <td data-label="Status">
+                            <span class="gwios-badge @(item.Active ? "gwios-badge--success" : "gwios-badge--muted")">
+                                @(item.Active ? "Aktiv" : "Inaktiv")
+                            </span>
+                        </td>
+                        <td data-label="Aktionen" class="gwios-table-actions">
+                            <button type="button" class="gwios-icon-button" title="Bearbeiten" @onclick="() => OpenEditItem(item)">
+                                ✎
+                            </button>
+                            <button type="button"
+                                    class="gwios-button gwios-button--compact gwios-button--secondary"
+                                    @onclick="() => ToggleActiveAsync(item)">
+                                @(item.Active ? "Deaktivieren" : "Aktivieren")
+                            </button>
+                            <GwiOSConfirmButton Title="Löschen"
+                                                CssClass="gwios-icon-button"
+                                                ConfirmCssClass="gwios-icon-button gwios-icon-button--danger"
+                                                OnConfirmed="() => DeleteItemAsync(item)">
+                                ✕
+                            </GwiOSConfirmButton>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (FilteredItems.Count == 0)
+        {
+            <p class="gwios-empty">Keine wiederkehrenden Posten in dieser Liste.</p>
+        }
+    </div>
+</div>
+
+@if (_editedItem is not null)
+{
+    <GwiOSDialog Title="@DialogTitle" CanClose="!_isSaving" OnClose="CloseDialog">
+        <ChildContent>
+            <div class="gwios-form-field">
+                <label class="gwios-form-field-label">Typ</label>
+                <GwiOSPillGroup Items="@(["Fixeinnahme", "Fixkosten"])"
+                                SelectedItem="@(_editType == CategoryType.Income ? "Fixeinnahme" : "Fixkosten")"
+                                SelectedItemChanged="SelectEditType"
+                                AriaLabel="Typ" />
+            </div>
+            <GwiOSFormField Label="Bezeichnung" InputId="fix-edit-name" IsRequired="true" ErrorMessage="@_nameError">
+                <GwiOSTextBox id="fix-edit-name"
+                              @bind-Value="_editName"
+                              @bind-Value:after="() => _nameError = null"
+                              Placeholder="z. B. Miete"
+                              MaxLength="100"
+                              IsRequired="true"
+                              RequiredMessage="Die Bezeichnung ist ein Pflichtfeld."
+                              ErrorMessage="@_nameError"
+                              OnEnter="SaveItemAsync" />
+            </GwiOSFormField>
+            <GwiOSFormField Label="Kategorie" InputId="fix-edit-category">
+                <GwiOSCategorySelect id="fix-edit-category"
+                                     Categories="_categories"
+                                     Type="_editType"
+                                     SelectedCategoryId="_editCategoryId"
+                                     SelectedCategoryIdChanged="id => _editCategoryId = id"
+                                     AriaLabel="Kategorie" />
+            </GwiOSFormField>
+            <div class="gwios-form-grid">
+                <GwiOSFormField Label="Betrag" InputId="fix-edit-amount" IsRequired="true" ErrorMessage="@_amountError">
+                    <input id="fix-edit-amount" type="number" step="0.01" min="0" class="gwios-input" @bind="_editAmount" />
+                </GwiOSFormField>
+                <GwiOSFormField Label="Turnus" InputId="fix-edit-interval">
+                    <select id="fix-edit-interval" class="gwios-input" @bind="_editInterval">
+                        <option value="@RecurringInterval.Weekly">Wöchentlich</option>
+                        <option value="@RecurringInterval.Monthly">Monatlich</option>
+                        <option value="@RecurringInterval.Quarterly">Quartalsweise</option>
+                        <option value="@RecurringInterval.Yearly">Jährlich</option>
+                    </select>
+                </GwiOSFormField>
+                <GwiOSFormField Label="Fällig am Tag" InputId="fix-edit-due-day">
+                    <input id="fix-edit-due-day" type="number" min="1" max="28" class="gwios-input" @bind="_editDueDay" />
+                </GwiOSFormField>
+                @if ((_editInterval == RecurringInterval.Quarterly) || (_editInterval == RecurringInterval.Yearly))
+                {
+                    <GwiOSFormField Label="Startmonat" InputId="fix-edit-start-month">
+                        <select id="fix-edit-start-month" class="gwios-input" @bind="_editStartMonth">
+                            @for (int month = 0; month < MonthNames.Length; month++)
+                            {
+                                <option value="@month">@MonthNames[month]</option>
+                            }
+                        </select>
+                    </GwiOSFormField>
+                }
+            </div>
+            <div class="gwios-form-field">
+                <label class="gwios-form-field-label">Status</label>
+                <GwiOSPillGroup Items="@(["Aktiv", "Inaktiv"])"
+                                SelectedItem="@(_editActive ? "Aktiv" : "Inaktiv")"
+                                SelectedItemChanged="SelectEditActive"
+                                AriaLabel="Status" />
+            </div>
+        </ChildContent>
+        <Actions>
+            <button type="button" class="gwios-button gwios-button--secondary" disabled="@_isSaving" @onclick="CloseDialog">
+                Abbrechen
+            </button>
+            <button type="button" class="gwios-button" disabled="@_isSaving" @onclick="SaveItemAsync">
+                @(_isSaving ? "Speichert …" : "Speichern")
+            </button>
+        </Actions>
+    </GwiOSDialog>
+}

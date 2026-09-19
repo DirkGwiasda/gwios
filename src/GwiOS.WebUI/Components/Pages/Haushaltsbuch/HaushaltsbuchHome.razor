@@ -1,0 +1,8 @@
+@page "/haushaltsbuch"
+@inject NavigationManager NavigationManager
+
+@code {
+    // The Haushaltsbuch has no overview of its own; it opens with its first tab.
+    protected override void OnInitialized()
+        => NavigationManager.NavigateTo("haushaltsbuch/dashboard", replace: true);
+}

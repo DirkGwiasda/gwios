@@ -1,0 +1,35 @@
+<div class="gwios-line-chart">
+    <div class="gwios-line-chart-legend">
+        @foreach (GwiOSLineSeries series in Series)
+        {
+            <span class="gwios-line-chart-legend-item">
+                <span class="gwios-line-chart-legend-swatch" style="background-color: @series.Color;"></span>
+                @series.Label
+            </span>
+        }
+    </div>
+    <div class="gwios-line-chart-plot">
+        <svg viewBox="0 0 720 200" preserveAspectRatio="none" class="gwios-line-chart-svg">
+            <line x1="0" y1="0" x2="720" y2="0" class="gwios-line-chart-gridline" vector-effect="non-scaling-stroke"></line>
+            <line x1="0" y1="100" x2="720" y2="100" class="gwios-line-chart-gridline" vector-effect="non-scaling-stroke"></line>
+            <line x1="0" y1="200" x2="720" y2="200" class="gwios-line-chart-gridline" vector-effect="non-scaling-stroke"></line>
+            @foreach (GwiOSLineSeries series in Series)
+            {
+                <polyline points="@GetPoints(series)"
+                          fill="none"
+                          stroke="@series.Color"
+                          stroke-width="2.5"
+                          stroke-linejoin="round"
+                          vector-effect="non-scaling-stroke">
+                </polyline>
+            }
+        </svg>
+        <span class="gwios-line-chart-max-label">@MaxLabel</span>
+    </div>
+    <div class="gwios-line-chart-labels">
+        @foreach (string label in Labels)
+        {
+            <span class="gwios-line-chart-label">@label</span>
+        }
+    </div>
+</div>

@@ -1,0 +1,88 @@
+.gwios-donut-chart {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.gwios-donut-chart-circle {
+    position: relative;
+    width: 164px;
+    height: 164px;
+    flex-shrink: 0;
+}
+
+.gwios-donut-chart-gradient {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+}
+
+.gwios-donut-chart-center {
+    position: absolute;
+    inset: 34px;
+    border-radius: 50%;
+    background: var(--gwios-bg-raised);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+.gwios-donut-chart-center-label {
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gwios-text-dim);
+}
+
+.gwios-donut-chart-center-value {
+    font-family: var(--gwios-font-display);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gwios-text);
+}
+
+.gwios-donut-chart-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1 1 150px;
+    min-width: 0;
+}
+
+.gwios-donut-chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.gwios-donut-chart-legend-item:hover {
+    opacity: 0.8;
+}
+
+.gwios-donut-chart-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.gwios-donut-chart-legend-label {
+    font-size: 13px;
+    color: var(--gwios-text);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gwios-donut-chart-legend-value {
+    font-size: 12.5px;
+    color: var(--gwios-text-dim);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}

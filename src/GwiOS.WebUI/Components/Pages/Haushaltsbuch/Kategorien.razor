@@ -1,0 +1,100 @@
+@page "/haushaltsbuch/kategorien"
+
+<PageTitle>Kategorien · Haushaltsbuch · gwi-os</PageTitle>
+
+<div class="gwios-page">
+    <h1>Haushaltsbuch</h1>
+
+    <div class="gwios-tile-grid gwios-tile-grid--wide">
+        <GwiOSSection Title="Einnahmen" Accent="GwiOSSectionAccent.Success">
+            <div class="gwios-category-tree-header">
+                <span class="gwios-category-tree-sum">@FormatSum(GetTypeSum(CategoryType.Income))</span>
+                <button type="button"
+                        class="gwios-button gwios-button--secondary gwios-button--compact"
+                        @onclick="() => OpenNewCategory(CategoryType.Income, null)">
+                    + Hauptkategorie
+                </button>
+            </div>
+            <GwiOSCategoryTree Categories="IncomeCategories"
+                               Sums="_sums"
+                               CollapsedCategoryIds="_collapsedCategoryIds"
+                               OnToggleCollapse="ToggleCollapse"
+                               OnAddChild="parentId => OpenNewCategory(CategoryType.Income, parentId)"
+                               OnEdit="OpenEditCategory"
+                               OnDelete="DeleteCategoryAsync" />
+        </GwiOSSection>
+
+        <GwiOSSection Title="Ausgaben" Accent="GwiOSSectionAccent.Primary">
+            <div class="gwios-category-tree-header">
+                <span class="gwios-category-tree-sum">@FormatSum(GetTypeSum(CategoryType.Expense))</span>
+                <button type="button"
+                        class="gwios-button gwios-button--secondary gwios-button--compact"
+                        @onclick="() => OpenNewCategory(CategoryType.Expense, null)">
+                    + Hauptkategorie
+                </button>
+            </div>
+            <GwiOSCategoryTree Categories="ExpenseCategories"
+                               Sums="_sums"
+                               CollapsedCategoryIds="_collapsedCategoryIds"
+                               OnToggleCollapse="ToggleCollapse"
+                               OnAddChild="parentId => OpenNewCategory(CategoryType.Expense, parentId)"
+                               OnEdit="OpenEditCategory"
+                               OnDelete="DeleteCategoryAsync" />
+        </GwiOSSection>
+    </div>
+</div>
+
+@if (_editedCategory is not null)
+{
+    <GwiOSDialog Title="@DialogTitle" CanClose="!_isSaving" OnClose="CloseDialog">
+        <ChildContent>
+            <GwiOSFormField Label="Name" InputId="category-edit-name" IsRequired="true" ErrorMessage="@_nameError">
+                <GwiOSTextBox id="category-edit-name"
+                              @bind-Value="_editName"
+                              @bind-Value:after="() => _nameError = null"
+                              Placeholder="z. B. Lebensmittel"
+                              MaxLength="100"
+                              IsRequired="true"
+                              RequiredMessage="Der Name ist ein Pflichtfeld."
+                              ErrorMessage="@_nameError"
+                              OnEnter="SaveCategoryAsync" />
+            </GwiOSFormField>
+            <GwiOSFormField Label="Übergeordnete Kategorie" InputId="category-edit-parent">
+                <GwiOSCategorySelect id="category-edit-parent"
+                                     Categories="_categories"
+                                     Type="_editType"
+                                     SelectedCategoryId="_editParentId"
+                                     SelectedCategoryIdChanged="id => _editParentId = id"
+                                     ExcludeCategoryId="_editedCategory.Id"
+                                     EmptyOptionLabel="@($"— Hauptkategorie ({(_editType == CategoryType.Income ? "Einnahmen" : "Ausgaben")}) —")"
+                                     AriaLabel="Übergeordnete Kategorie" />
+            </GwiOSFormField>
+            @if (_editParentId is null)
+            {
+                <GwiOSFormField Label="Farbe"
+                                InputId="category-edit-color"
+                                Hint="Die Farbe markiert die Kategorie in Buchungen und Berichten.">
+                    <div id="category-edit-color" class="gwios-color-swatches">
+                        @foreach (string color in ColorSwatches)
+                        {
+                            <button type="button"
+                                    class="gwios-color-swatch @(color == _editColor ? "gwios-color-swatch--selected" : null)"
+                                    style="background-color: @color;"
+                                    aria-label="Farbe wählen"
+                                    @onclick="() => _editColor = color">
+                            </button>
+                        }
+                    </div>
+                </GwiOSFormField>
+            }
+        </ChildContent>
+        <Actions>
+            <button type="button" class="gwios-button gwios-button--secondary" disabled="@_isSaving" @onclick="CloseDialog">
+                Abbrechen
+            </button>
+            <button type="button" class="gwios-button" disabled="@_isSaving" @onclick="SaveCategoryAsync">
+                @(_isSaving ? "Speichert …" : "Speichern")
+            </button>
+        </Actions>
+    </GwiOSDialog>
+}

@@ -1,0 +1,15 @@
+@inherits LayoutComponentBase
+@layout MainLayout
+
+<GwiOSTabNav Tabs="HaushaltsbuchTabs" AriaLabel="Haushaltsbuch-Bereiche" />
+@Body
+
+@code {
+    private static readonly IReadOnlyList<GwiOSTab> HaushaltsbuchTabs =
+    [
+        new("Dashboard & Buchführung", "haushaltsbuch/dashboard"),
+        new("Fixkosten & Fixeinnahmen", "haushaltsbuch/fixkosten"),
+        new("Kategorien", "haushaltsbuch/kategorien"),
+        new("Berichte & Analysen", "haushaltsbuch/berichte")
+    ];
+}

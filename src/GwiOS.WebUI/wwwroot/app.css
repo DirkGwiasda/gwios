@@ -610,6 +610,39 @@ h1:focus {
 }
 
 /* --------------------------------------------------------------------------
+   Haushaltsbuch
+   Wiederverwendbare Klassen für die vier Tabs des Haushaltsbuchs.
+   -------------------------------------------------------------------------- */
+
+.gwios-amount {
+    font-weight: 700;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.gwios-amount--success {
+    color: var(--gwios-success);
+}
+
+.gwios-amount--danger {
+    color: var(--gwios-danger);
+}
+
+.gwios-table-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.gwios-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+}
+
+/* --------------------------------------------------------------------------
    Framework
    -------------------------------------------------------------------------- */
 

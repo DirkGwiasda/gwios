@@ -139,6 +139,39 @@ Intervalle, Verläufe) stehen im devplan, Abschnitt „Satelliten“. Bestätigt
   Sperren, Entsperren, neues Token und Löschen betreffen nur `Satellite` und gehen direkt an den
   `SatelliteManager`.
 
+## Haushaltsbuch
+
+Anwendung der Regeln oben auf die Domäne `GwiOS.Core/Haushaltsbuch`. Fachliche Vorgaben stammen aus der
+Design-Vorlage (`docs/UI/GwiOS.WebUI.Design.html`, Modul „Haushaltsbuch (HaBu)“) und aus dem devplan, Abschnitt
+„Haushaltsbuch“. Bestätigt von Dirk (18.09.2026).
+
+### Manager
+
+| Manager | Entität | Aufgaben | Helfer |
+|---|---|---|---|
+| `CategoryManagement` | `Category`: Name, Typ (Einnahme/Ausgabe), übergeordnete Kategorie (bis zu 5 Ebenen), Farbe (nur an Wurzeln) | Anlegen, Ändern, Löschen (verweigert bei Unterkategorien oder Verwendung in Buchungen/Fixposten), Lesen | Validator, `CategoryPostgresRepository` |
+| `BookingManagement` | `Booking`: Datum, Typ, Kategorie, Betrag, Beschreibung, Status (gebucht/ausstehend), optionaler Verweis auf den erzeugenden Fixposten | Anlegen, Ändern, Löschen, Lesen nach Monat/Zeitraum | Validator, `BookingPostgresRepository` |
+| `RecurringItemManagement` | `RecurringItem`: Name, Typ, Kategorie, Betrag, Turnus (wöchentlich/monatlich/quartalsweise/jährlich), Fälligkeitstag, Startmonat, aktiv | Anlegen, Ändern, Aktivieren/Deaktivieren, Löschen, Lesen | Validator, `RecurringItemPostgresRepository` |
+| `MonthReviewManagement` | `MonthReview`: Monat (1. des Monats), Zeitpunkt der Prüfung | Als geprüft markieren (upsert, wiederholbar), Prüfstatus eines Monats lesen | Validator, `MonthReviewPostgresRepository` |
+
+### Workflows
+
+| Workflow | Orchestriert | Ablauf |
+|---|---|---|
+| `RecurringBookingGenerationWorkflow` | RecurringItem, Booking, MonthReview | Prüft, ob der gewählte Monat bereits geprüft ist; wenn nicht, ermittelt die fälligen, noch nicht gebuchten Vorkommen aktiver Fixposten zur Anzeige im Monatsstart-Popup; legt für die vom Benutzer bestätigten Vorkommen ausstehende Buchungen an und markiert den Monat als geprüft — auch wenn nichts ausgewählt wurde |
+| `HaushaltsbuchOverviewWorkflow` | Booking, Category, RecurringItem | Liefert alle Kategorien, alle Fixposten und die Buchungen im angegebenen Zeitraum in einem Aufruf; bedient damit Dashboard, Fixkosten-, Kategorien- und Berichte-Tab gleichermaßen (Dashboard/Kategorien mit dem gewählten Monat als Zeitraum, Berichte mit dem gewählten weiteren Zeitraum). Formatierung (Kategoriepfade, Farben, Summen, Diagramme) macht die WebUI aus den Rohdaten |
+| `CategoryDeletionWorkflow` | Category, RecurringItem, Booking | Prüft vor dem Löschen, ob die Kategorie noch in einem Fixposten oder einer Buchung verwendet wird (`CategoryInUseException`); erst dann ruft er `CategoryManager.DeleteCategoryAsync` auf, das weiterhin selbst auf Unterkategorien prüft (`CategoryHasChildrenException`) |
+
+### Hosts
+
+- Seite „Haushaltsbuch“ (`/haushaltsbuch`, vier Tabs analog zum Admin-Bereich): liest über
+  `HaushaltsbuchOverviewWorkflow`; Anlegen/Ändern einzelner Buchungen, Fixposten und Kategorien geht direkt an den
+  jeweiligen Manager, Löschen einer Kategorie über `CategoryDeletionWorkflow`.
+- Beim Öffnen des Dashboard-Tabs in einem noch nicht geprüften Monat ruft die Seite
+  `RecurringBookingGenerationWorkflow` auf und zeigt bei offenen Vorschlägen automatisch ein Popup mit den fälligen
+  Fixposten zum Abhaken; wird es ohne Bestätigung verlassen, bleibt der Monat ungeprüft und das Popup erscheint beim
+  nächsten Besuch erneut. Der Button „Fixbuchungen generieren“ bleibt als manueller Weg zusätzlich bestehen.
+
 ## Entscheidungen
 
 - Regeln für Manager, Workflows und Hosts von Dirk vorgegeben bzw. bestätigt (17.09.2026): ein Manager je
@@ -173,3 +206,25 @@ Intervalle, Verläufe) stehen im devplan, Abschnitt „Satelliten“. Bestätigt
   `SatelliteAdoptionWorkflow` und `SatelliteBlockingWorkflow` hinzu (bestätigt von Dirk, 17.09.2026).
 - Die Regeln dieses Dokuments zu Domänen, Managern und Workflows gelten vorerst nur für das Backend
   (`GwiOS.Core`). Für die UI kommen eigene Regeln (Vorgabe von Dirk, 17.09.2026).
+- Haushaltsbuch: ein Manager je Entität (`CategoryManagement`, `BookingManagement`, `RecurringItemManagement`, dazu
+  `MonthReviewManagement` für den Monatsstart-Check), drei Workflows (`RecurringBookingGenerationWorkflow`,
+  `HaushaltsbuchOverviewWorkflow`, `CategoryDeletionWorkflow`), eigenes Schema `haushaltsbuch`; einzelne
+  CRUD-Vorgänge laufen ohne Workflow direkt über den jeweiligen Manager (bestätigt von Dirk, 18.09.2026).
+  `HaushaltsbuchOverviewWorkflow` bedient beim Umsetzen zusammengelegt sowohl die einfachen Übersichten als auch
+  die Berichte (ein eigener `HaushaltsbuchReportWorkflow` erübrigte sich, weil beide nur Kategorien, Fixposten und
+  Buchungen in einem Zeitraum zusammenstellen, nur mit unterschiedlichem Zeitraum). Das Löschen einer Kategorie
+  prüft zusätzlich zu Unterkategorien (`CategoryManager`, unverändert) auch die Verwendung in Buchungen und
+  Fixposten (`CategoryDeletionWorkflow`, `CategoryInUseException`) — bei Phase 1 nur als Lücke erkannt, hier beim
+  Umsetzen der Workflows ergänzt.
+- Haushaltsbuch: Kategorien sind beliebig verschachtelbar, begrenzt auf maximal 5 Ebenen; nur Wurzelkategorien
+  tragen eine Farbe, Unterkategorien übernehmen sie zur Anzeige (bestätigt von Dirk, 18.09.2026).
+- Haushaltsbuch: familienweiter Zugriff ohne Rollen-/Personenbeschränkung, wie ToDos (bestätigt von Dirk,
+  18.09.2026).
+- Haushaltsbuch: kein Kontostand-Übertrag zwischen Monaten; der Saldo ist immer Einnahmen minus Ausgaben des
+  gewählten Monats (bestätigt von Dirk, 18.09.2026).
+- Haushaltsbuch: statt eines reinen Buttons zeigt die Dashboard-Seite beim ersten Besuch eines ungeprüften Monats
+  automatisch ein Popup mit den fälligen Fixposten zum Abhaken; erst eine Bestätigung markiert den Monat als
+  geprüft. Der Button „Fixbuchungen generieren“ bleibt zusätzlich als manueller Weg bestehen (Vorgabe von Dirk,
+  18.09.2026). Wann genau der Monats-Check auslöst und ob ein Verlassen ohne Bestätigung den Monat ungeprüft
+  lässt, ist ein Vorschlag von Claude und noch nicht von Dirk bestätigt — siehe devplan, Abschnitt
+  „Haushaltsbuch“, offene Fragen.

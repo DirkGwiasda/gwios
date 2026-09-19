@@ -1,0 +1,25 @@
+.gwios-fixkosten-sum-panel {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.gwios-fixkosten-sum-label {
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gwios-text-dim);
+}
+
+.gwios-fixkosten-sum-value {
+    font-family: var(--gwios-font-display);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gwios-text);
+}
+
+.gwios-fixkosten-sum-hint {
+    font-size: 12.5px;
+    color: var(--gwios-text-faint);
+}

@@ -1,14 +1,20 @@
 using GwiOS.Core;
 using GwiOS.Core.CrossCutting.Logging.Contracts;
 using GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement.Contracts;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.BookingManagement.Contracts;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.CategoryManagement.Contracts;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.MonthReviewManagement.Contracts;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.RecurringItemManagement.Contracts;
 using GwiOS.Core.Satellites.Domain.Managers.SatelliteManagement.Contracts;
 using GwiOS.Core.ToDos.Domain.Managers.ToDoManagement.Contracts;
 using GwiOS.WebUI.Api.Satellites;
 using GwiOS.WebUI.Api.Satellites.Contracts;
 using GwiOS.WebUI.BackgroundServices;
 using GwiOS.WebUI.Components;
+using GwiOS.WebUI.E2E;
 using GwiOS.WebUI.StatusMessages;
 using GwiOS.WebUI.StatusMessages.Contracts;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +26,10 @@ public class Program
 {
     private const string GwiOSConnectionStringVariableName = "GwiOS.DB.Connectionstring";
     private const string ApiPathPrefix = "/api";
+
+    // A dedicated hosting environment name, set only by the E2E test harness, that swaps Keycloak sign-in for
+    // GwiOS.WebUI.E2E.E2ETestAuthenticationHandler; never "Development" or "Production".
+    private const string E2EEnvironmentName = "E2E";
 
     // A ping body is well below 1 KB; larger requests are rejected before they are read.
     private const long MaxSatellitePingBodyBytes = 4096;
@@ -39,29 +49,39 @@ public class Program
             builder.Configuration.GetSection(MeasurementPollingOptions.SectionName));
         builder.Services.AddHostedService<MeasurementPollingService>();
 
-        builder.Services.AddAuthentication(options =>
+        if (builder.Environment.IsEnvironment(E2EEnvironmentName))
         {
-            options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
-        })
-            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
-            .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
+            builder.Services.AddAuthentication(E2ETestAuthenticationHandler.SchemeName)
+                .AddScheme<AuthenticationSchemeOptions, E2ETestAuthenticationHandler>(
+                    E2ETestAuthenticationHandler.SchemeName,
+                    _ => { });
+        }
+        else
+        {
+            builder.Services.AddAuthentication(options =>
             {
-                options.Authority = builder.Configuration["Keycloak:Authority"];
-                options.ClientId = builder.Configuration["Keycloak:ClientId"];
-                options.ClientSecret = builder.Configuration["Keycloak:ClientSecret"];
-
-                options.ResponseType = "code";
-                options.SaveTokens = true;
-                options.GetClaimsFromUserInfoEndpoint = true;
-                options.RequireHttpsMetadata = true; // In Produktion auf 'true' stellen!
-
-                options.TokenValidationParameters = new TokenValidationParameters
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+            })
+                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
                 {
-                    NameClaimType = "preferred_username", // Keycloak standardmäßig
-                    RoleClaimType = "roles"
-                };
-            });
+                    options.Authority = builder.Configuration["Keycloak:Authority"];
+                    options.ClientId = builder.Configuration["Keycloak:ClientId"];
+                    options.ClientSecret = builder.Configuration["Keycloak:ClientSecret"];
+
+                    options.ResponseType = "code";
+                    options.SaveTokens = true;
+                    options.GetClaimsFromUserInfoEndpoint = true;
+                    options.RequireHttpsMetadata = true; // In Produktion auf 'true' stellen!
+
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        NameClaimType = "preferred_username", // Keycloak standardmäßig
+                        RoleClaimType = "roles"
+                    };
+                });
+        }
 
         builder.Services.AddAuthorization();
         builder.Services.AddCascadingAuthenticationState();
@@ -129,5 +149,15 @@ public class Program
         await toDoRepository.EnsureStorageCreatedAsync();
         ISatelliteRepository satelliteRepository = scope.ServiceProvider.GetRequiredService<ISatelliteRepository>();
         await satelliteRepository.EnsureStorageCreatedAsync();
+        ICategoryRepository categoryRepository = scope.ServiceProvider.GetRequiredService<ICategoryRepository>();
+        await categoryRepository.EnsureStorageCreatedAsync();
+        IRecurringItemRepository recurringItemRepository =
+            scope.ServiceProvider.GetRequiredService<IRecurringItemRepository>();
+        await recurringItemRepository.EnsureStorageCreatedAsync();
+        IBookingRepository bookingRepository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
+        await bookingRepository.EnsureStorageCreatedAsync();
+        IMonthReviewRepository monthReviewRepository =
+            scope.ServiceProvider.GetRequiredService<IMonthReviewRepository>();
+        await monthReviewRepository.EnsureStorageCreatedAsync();
     }
 }

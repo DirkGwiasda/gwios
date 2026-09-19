@@ -6,6 +6,21 @@ using GwiOS.Core.CrossCutting.Logging.Infrastructure;
 using GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement;
 using GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement.Contracts;
 using GwiOS.Core.CrossCutting.Persons.Infrastructure;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.BookingManagement;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.BookingManagement.Contracts;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.CategoryManagement;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.CategoryManagement.Contracts;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.MonthReviewManagement;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.MonthReviewManagement.Contracts;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.RecurringItemManagement;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.RecurringItemManagement.Contracts;
+using GwiOS.Core.Haushaltsbuch.Domain.Workflows.CategoryDeletion;
+using GwiOS.Core.Haushaltsbuch.Domain.Workflows.CategoryDeletion.Contracts;
+using GwiOS.Core.Haushaltsbuch.Domain.Workflows.HaushaltsbuchOverview;
+using GwiOS.Core.Haushaltsbuch.Domain.Workflows.HaushaltsbuchOverview.Contracts;
+using GwiOS.Core.Haushaltsbuch.Domain.Workflows.RecurringBookingGeneration;
+using GwiOS.Core.Haushaltsbuch.Domain.Workflows.RecurringBookingGeneration.Contracts;
+using GwiOS.Core.Haushaltsbuch.Infrastructure;
 using GwiOS.Core.Satellites.Domain.Managers.MeasurementManagement;
 using GwiOS.Core.Satellites.Domain.Managers.MeasurementManagement.Contracts;
 using GwiOS.Core.Satellites.Domain.Managers.SatelliteCandidateManagement;
@@ -47,8 +62,12 @@ public static class GwiOSCoreServiceCollectionExtensions
     /// Npgsql connection string of the GwiOS database. The database must already exist; its tables are created by
     /// <see cref="ILogEntryRepository.EnsureStorageCreatedAsync"/>,
     /// <see cref="IPersonRepository.EnsureStorageCreatedAsync"/>,
-    /// <see cref="IToDoRepository.EnsureStorageCreatedAsync"/> and
-    /// <see cref="ISatelliteRepository.EnsureStorageCreatedAsync"/>.
+    /// <see cref="IToDoRepository.EnsureStorageCreatedAsync"/>,
+    /// <see cref="ISatelliteRepository.EnsureStorageCreatedAsync"/>,
+    /// <see cref="ICategoryRepository.EnsureStorageCreatedAsync"/>,
+    /// <see cref="IRecurringItemRepository.EnsureStorageCreatedAsync"/>,
+    /// <see cref="IBookingRepository.EnsureStorageCreatedAsync"/> and
+    /// <see cref="IMonthReviewRepository.EnsureStorageCreatedAsync"/>.
     /// </param>
     /// <returns>The same container, for chaining.</returns>
     public static IServiceCollection AddGwiOSCore(this IServiceCollection services, string connectionString)
@@ -59,6 +78,7 @@ public static class GwiOSCoreServiceCollectionExtensions
         AddPersons(services);
         AddToDos(services);
         AddSatellites(services);
+        AddHaushaltsbuch(services);
         return services;
     }
 
@@ -114,6 +134,29 @@ public static class GwiOSCoreServiceCollectionExtensions
         services.AddScoped<ISatelliteOverviewWorkflow, SatelliteOverviewWorkflow>();
         services.AddScoped<ISatelliteAdoptionWorkflow, SatelliteAdoptionWorkflow>();
         services.AddScoped<ISatelliteBlockingWorkflow, SatelliteBlockingWorkflow>();
+    }
+
+    private static void AddHaushaltsbuch(IServiceCollection services)
+    {
+        services.AddScoped<ICategoryRepository, CategoryPostgresRepository>();
+        services.AddScoped<ICategoryValidator, CategoryValidator>();
+        services.AddScoped<ICategoryManager, CategoryManager>();
+
+        services.AddScoped<IRecurringItemRepository, RecurringItemPostgresRepository>();
+        services.AddScoped<IRecurringItemValidator, RecurringItemValidator>();
+        services.AddScoped<IRecurringItemManager, RecurringItemManager>();
+
+        services.AddScoped<IBookingRepository, BookingPostgresRepository>();
+        services.AddScoped<IBookingValidator, BookingValidator>();
+        services.AddScoped<IBookingManager, BookingManager>();
+
+        services.AddScoped<IMonthReviewRepository, MonthReviewPostgresRepository>();
+        services.AddScoped<IMonthReviewValidator, MonthReviewValidator>();
+        services.AddScoped<IMonthReviewManager, MonthReviewManager>();
+
+        services.AddScoped<ICategoryDeletionWorkflow, CategoryDeletionWorkflow>();
+        services.AddScoped<IRecurringBookingGenerationWorkflow, RecurringBookingGenerationWorkflow>();
+        services.AddScoped<IHaushaltsbuchOverviewWorkflow, HaushaltsbuchOverviewWorkflow>();
     }
 
     // Satellites answer within milliseconds in the LAN; a satellite that does not must not hold up the others for long.

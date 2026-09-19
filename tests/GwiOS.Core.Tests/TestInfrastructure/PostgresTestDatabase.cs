@@ -1,6 +1,11 @@
 using GwiOS.Core.CrossCutting.Logging.Contracts;
 using GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement.Contracts;
 using GwiOS.Core.CrossCutting.Persons.Infrastructure;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.BookingManagement.Contracts;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.CategoryManagement.Contracts;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.MonthReviewManagement.Contracts;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.RecurringItemManagement.Contracts;
+using GwiOS.Core.Haushaltsbuch.Infrastructure;
 using GwiOS.Core.Satellites.Domain.Managers.SatelliteManagement.Contracts;
 using GwiOS.Core.Satellites.Infrastructure;
 using GwiOS.Core.Tests.CrossCutting.Logging.Contracts;
@@ -38,6 +43,16 @@ public sealed class PostgresTestDatabase : IAsyncLifetime
         SatelliteRepository = _scope.ServiceProvider.GetRequiredService<ISatelliteRepository>();
         SatelliteRepositoryLogger = (LoggerFake<SatellitePostgresRepository>)_serviceProvider
             .GetRequiredService<ILogger<SatellitePostgresRepository>>();
+        CategoryRepository = _scope.ServiceProvider.GetRequiredService<ICategoryRepository>();
+        CategoryRepositoryLogger = (LoggerFake<CategoryPostgresRepository>)_serviceProvider
+            .GetRequiredService<ILogger<CategoryPostgresRepository>>();
+        RecurringItemRepository = _scope.ServiceProvider.GetRequiredService<IRecurringItemRepository>();
+        RecurringItemRepositoryLogger = (LoggerFake<RecurringItemPostgresRepository>)_serviceProvider
+            .GetRequiredService<ILogger<RecurringItemPostgresRepository>>();
+        BookingRepository = _scope.ServiceProvider.GetRequiredService<IBookingRepository>();
+        BookingRepositoryLogger = (LoggerFake<BookingPostgresRepository>)_serviceProvider
+            .GetRequiredService<ILogger<BookingPostgresRepository>>();
+        MonthReviewRepository = _scope.ServiceProvider.GetRequiredService<IMonthReviewRepository>();
     }
 
     /// <summary>
@@ -78,12 +93,54 @@ public sealed class PostgresTestDatabase : IAsyncLifetime
     /// </summary>
     internal LoggerFake<SatellitePostgresRepository> SatelliteRepositoryLogger { get; }
 
+    /// <summary>
+    /// The category repository under test, connected to the test database.
+    /// </summary>
+    public ICategoryRepository CategoryRepository { get; }
+
+    /// <summary>
+    /// The logger of the category repository. It keeps the entries of all tests sharing this fixture, so tests only
+    /// look at the entries of the categories they created themselves.
+    /// </summary>
+    internal LoggerFake<CategoryPostgresRepository> CategoryRepositoryLogger { get; }
+
+    /// <summary>
+    /// The recurring item repository under test, connected to the test database.
+    /// </summary>
+    public IRecurringItemRepository RecurringItemRepository { get; }
+
+    /// <summary>
+    /// The logger of the recurring item repository. It keeps the entries of all tests sharing this fixture, so
+    /// tests only look at the entries of the recurring items they created themselves.
+    /// </summary>
+    internal LoggerFake<RecurringItemPostgresRepository> RecurringItemRepositoryLogger { get; }
+
+    /// <summary>
+    /// The booking repository under test, connected to the test database.
+    /// </summary>
+    public IBookingRepository BookingRepository { get; }
+
+    /// <summary>
+    /// The logger of the booking repository. It keeps the entries of all tests sharing this fixture, so tests only
+    /// look at the entries of the bookings they created themselves.
+    /// </summary>
+    internal LoggerFake<BookingPostgresRepository> BookingRepositoryLogger { get; }
+
+    /// <summary>
+    /// The month review repository under test, connected to the test database.
+    /// </summary>
+    public IMonthReviewRepository MonthReviewRepository { get; }
+
     public async ValueTask InitializeAsync()
     {
         await LogEntryRepository.EnsureStorageCreatedAsync();
         await PersonRepository.EnsureStorageCreatedAsync();
         await ToDoRepository.EnsureStorageCreatedAsync();
         await SatelliteRepository.EnsureStorageCreatedAsync();
+        await CategoryRepository.EnsureStorageCreatedAsync();
+        await RecurringItemRepository.EnsureStorageCreatedAsync();
+        await BookingRepository.EnsureStorageCreatedAsync();
+        await MonthReviewRepository.EnsureStorageCreatedAsync();
     }
 
     public async ValueTask DisposeAsync()
