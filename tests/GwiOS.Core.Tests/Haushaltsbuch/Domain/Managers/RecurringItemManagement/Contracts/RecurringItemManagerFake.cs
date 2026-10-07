@@ -1,15 +1,18 @@
 using GwiOS.Core.Haushaltsbuch.Domain.Managers.RecurringItemManagement.Contracts;
 using GwiOS.Core.Haushaltsbuch.Domain.Managers.RecurringItemManagement.Contracts.Models;
+using ProductionRecurringItemScheduler = GwiOS.Core.Haushaltsbuch.Domain.Managers.RecurringItemManagement.RecurringItemScheduler;
 
 namespace GwiOS.Core.Tests.Haushaltsbuch.Domain.Managers.RecurringItemManagement.Contracts;
 
 /// <summary>
 /// Stands in for <see cref="IRecurringItemManager"/> for the workflow tests. It keeps recurring items in memory and
-/// does not validate.
+/// does not validate. Due dates come from the real <c>RecurringItemScheduler</c>, so the workflow tests see
+/// the same schedule as production.
 /// </summary>
 public sealed class RecurringItemManagerFake : IRecurringItemManager
 {
     private readonly List<RecurringItem> _recurringItems = [];
+    private readonly ProductionRecurringItemScheduler _recurringItemScheduler = new();
 
     /// <summary>
     /// Stores a recurring item directly, as if it had been created before the test.
@@ -40,4 +43,7 @@ public sealed class RecurringItemManagerFake : IRecurringItemManager
         _recurringItems.RemoveAll(item => item.Id == recurringItemId);
         return Task.CompletedTask;
     }
+
+    public IReadOnlyList<DateOnly> GetDueDates(RecurringItem recurringItem, DateOnly month)
+        => _recurringItemScheduler.GetDueDates(recurringItem, month);
 }

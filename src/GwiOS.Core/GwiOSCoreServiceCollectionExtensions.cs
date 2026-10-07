@@ -24,6 +24,8 @@ using GwiOS.Core.Haushaltsbuch.Domain.Workflows.HaushaltsbuchOverview;
 using GwiOS.Core.Haushaltsbuch.Domain.Workflows.HaushaltsbuchOverview.Contracts;
 using GwiOS.Core.Haushaltsbuch.Domain.Workflows.RecurringBookingGeneration;
 using GwiOS.Core.Haushaltsbuch.Domain.Workflows.RecurringBookingGeneration.Contracts;
+using GwiOS.Core.Haushaltsbuch.Domain.Workflows.RecurringItemForecast;
+using GwiOS.Core.Haushaltsbuch.Domain.Workflows.RecurringItemForecast.Contracts;
 using GwiOS.Core.Haushaltsbuch.Infrastructure;
 using GwiOS.Core.Satellites.Domain.Managers.MeasurementManagement;
 using GwiOS.Core.Satellites.Domain.Managers.MeasurementManagement.Contracts;
@@ -156,6 +158,7 @@ public static class GwiOSCoreServiceCollectionExtensions
 
         services.AddScoped<IRecurringItemRepository, RecurringItemPostgresRepository>();
         services.AddScoped<IRecurringItemValidator, RecurringItemValidator>();
+        services.AddScoped<IRecurringItemScheduler, RecurringItemScheduler>();
         services.AddScoped<IRecurringItemManager, RecurringItemManager>();
 
         services.AddScoped<IBookingRepository, BookingPostgresRepository>();
@@ -169,6 +172,7 @@ public static class GwiOSCoreServiceCollectionExtensions
         services.AddScoped<ICategoryDeletionWorkflow, CategoryDeletionWorkflow>();
         services.AddScoped<IRecurringBookingGenerationWorkflow, RecurringBookingGenerationWorkflow>();
         services.AddScoped<IHaushaltsbuchOverviewWorkflow, HaushaltsbuchOverviewWorkflow>();
+        services.AddScoped<IRecurringItemForecastWorkflow, RecurringItemForecastWorkflow>();
     }
 
     // Satellites answer within milliseconds in the LAN; a satellite that does not must not hold up the others for long.

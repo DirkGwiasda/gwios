@@ -68,5 +68,25 @@
                 <GwiOSLineChart Series="LineSeries" Labels="LineLabels" />
             </ChildContent>
         </GwiOSCard>
+
+        <GwiOSCard Title="Fixkosten-Prognose" Hint="@ForecastHint">
+            <HeaderContent>
+                @* A plain link, so the browser handles the download itself; "download" keeps Blazor from routing it. *@
+                <a class="gwios-button gwios-button--compact"
+                   href="api/haushaltsbuch/fixkosten-prognose"
+                   download
+                   data-enhance-nav="false">
+                    Als PDF herunterladen
+                </a>
+            </HeaderContent>
+            <ChildContent>
+                <div class="gwios-berichte-forecast">
+                    @foreach (RecurringItemForecastMonth month in _forecastMonths)
+                    {
+                        <GwiOSRecurringItemForecastMonth @key="month.Month" Month="month" Categories="_categories" />
+                    }
+                </div>
+            </ChildContent>
+        </GwiOSCard>
     </div>
 </div>

@@ -153,6 +153,14 @@ nichts umgesetzt.
       „Status“ entfernt, Betrag in derselben Schriftgröße (13,5 px) wie die übrigen Spalten. Inaktive Posten stehen
       weiterhin in der Liste (sonst ließen sie sich nicht wieder aktivieren); ihren Zustand zeigt nur noch der Knopf
       „Aktivieren“/„Deaktivieren“. Fälligkeit und Startmonat bleiben im Bearbeiten-Dialog sichtbar.
+- [x] Fixkosten-Prognose in „Berichte & Analysen“ (Wunsch von Dirk, 07.10.2026): aktueller und die folgenden 5 Monate,
+      je Monat Einnahmen und Ausgaben (Datum, Name, Kategorie, Betrag) mit Summen und Saldo; nur aktive Fixposten,
+      auch wenn schon gebucht; wöchentliche Posten mit vier Terminen. Download als PDF
+      (`fixkosten-prognose-JJJJ-MM.pdf`, A4, druckfreundlich, Kopf nur auf Seite 1, ein Monat beginnt nicht ganz unten
+      auf einer Seite). Neu: `IRecurringItemScheduler`/`GetDueDates` (Fälligkeitslogik aus dem Generierungs-Workflow
+      herausgelöst), `RecurringItemForecastWorkflow`, `GwiOSRecurringItemForecastMonth` (mobil kompakte Zeilen statt
+      Karten), `RecurringItemForecastPdfRenderer`, `QuestPdfConfigurator`, Endpunkt. Tests: Core 668, WebUI 440, E2E 12
+      grün (gegen Postgres-Container); PDF im arm64-Image unter Emulation erzeugt und geprüft.
 - [x] Statt bUnit-Tests je Seite: echtes End-to-End-Testprojekt `tests/GwiOS.WebUI.E2E.Tests` mit Playwright
       gegen die real laufende WebUI (auf Wunsch von Dirk, 18.09.2026, als stärkerer Nachweis als Komponententests
       mit gerendertem Markup). Details siehe eigener Abschnitt unten.
@@ -260,6 +268,9 @@ Fakes, sondern gegen eine echte Datenbank und eine echte laufende WebUI geprüft
   Übersicht neben dem manuellen Buchen dienen. Vorerst bleibt alles wie es ist (Monatsstart-Popup und Button
   „Fixbuchungen für … generieren“). Offen: Popup entfernen? Button behalten? Monatsprüfung (`month_reviews`) und
   ggf. `RecurringBookingGenerationWorkflow` dann aus dem Core entfernen?
+- QuestPDF steht unter der Community-Lizenz (kostenlos für Privatpersonen und Firmen unter 1 Mio. USD Umsatz,
+  keine reine Open-Source-Lizenz); Dirk hat zugestimmt (07.10.2026). Bei einem QuestPDF-Update auf umbenannte APIs
+  achten (2026.9: `UseSystemFonts`, `RegisterFontFromStream`).
 - Seitentitel: Die Vorlage sagt „Haushaltsbuch HaBu“, umgesetzt ist „Haushaltsbuch“ (E2E-Tests prüfen darauf).
   Welcher soll gelten?
 - Die Satellitenkacheln zeigen Name, Temperatur, Feuchte und Luftdruck in Orbitron, die gerenderte Vorlage dort

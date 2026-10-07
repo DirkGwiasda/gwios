@@ -237,3 +237,12 @@ Design-Vorlage (`docs/UI/GwiOS.WebUI.Design.html`, Modul „Haushaltsbuch (HaBu)
   `PGPASSWORD` an `pg_dump`, nicht über die Kommandozeile. Host ist der Endpunkt `GET /api/backup` (angemeldete
   Benutzer, keine eigene Rolle — Vorgabe von Dirk: nur Familienmitglieder haben Konten); die Seite
   `/admin/datensicherung` verlinkt ihn als Download.
+- Haushaltsbuch, Fixkosten-Prognose (07.10.2026, Inhalt und QuestPDF von Dirk bestätigt): Die Fälligkeitsregeln der
+  Fixposten (wöchentlich am 1./8./15./22., quartalsweise und jährlich ab dem Startmonat, Fälligkeitstag höchstens bis
+  Monatsende) lagen privat im `RecurringBookingGenerationWorkflow`. Weil die Prognose sie ebenfalls braucht, liegen
+  sie jetzt im Helfer `IRecurringItemScheduler` des `RecurringItemManager` (`GetDueDates`); der Generierungs-Workflow
+  nutzt sie über den Manager. Neuer `RecurringItemForecastWorkflow` (Fixposten und Kategorien → je Monat Einnahmen,
+  Ausgaben, Summen, Saldo; nur aktive Posten, unabhängig von bereits erfassten Buchungen); er liefert die
+  Kategoriepfade als Namen mit, damit Seite und PDF keine eigene Pfadlogik brauchen. Das PDF entsteht im Host
+  (`GwiOS.WebUI/Pdf`, QuestPDF unter der Community-Lizenz, Schrift Inter eingebettet) und wird über
+  `GET /api/haushaltsbuch/fixkosten-prognose` geliefert.

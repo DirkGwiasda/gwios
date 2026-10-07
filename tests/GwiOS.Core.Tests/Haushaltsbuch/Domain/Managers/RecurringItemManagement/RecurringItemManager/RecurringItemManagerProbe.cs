@@ -5,14 +5,18 @@ using RecurringItemManagerUnderTest = GwiOS.Core.Haushaltsbuch.Domain.Managers.R
 namespace GwiOS.Core.Tests.Haushaltsbuch.Domain.Managers.RecurringItemManagement.RecurringItemManager;
 
 /// <summary>
-/// Runs a <c>RecurringItemManager</c> against an in-memory repository, a configurable validator and a recording
-/// logger, and gives the tests access to all three.
+/// Runs a <c>RecurringItemManager</c> against an in-memory repository, a configurable validator, a configurable
+/// scheduler and a recording logger, and gives the tests access to all four.
 /// </summary>
 internal sealed class RecurringItemManagerProbe
 {
     public RecurringItemManagerProbe()
     {
-        RecurringItemManager = new RecurringItemManagerUnderTest(RecurringItemRepository, RecurringItemValidator, Logger);
+        RecurringItemManager = new RecurringItemManagerUnderTest(
+            RecurringItemRepository,
+            RecurringItemValidator,
+            RecurringItemScheduler,
+            Logger);
     }
 
     /// <summary>
@@ -25,6 +29,11 @@ internal sealed class RecurringItemManagerProbe
     /// errors.
     /// </summary>
     public RecurringItemValidatorFake RecurringItemValidator { get; } = new();
+
+    /// <summary>
+    /// The scheduler the manager takes due dates from.
+    /// </summary>
+    public RecurringItemSchedulerFake RecurringItemScheduler { get; } = new();
 
     /// <summary>
     /// The logger the manager writes to.

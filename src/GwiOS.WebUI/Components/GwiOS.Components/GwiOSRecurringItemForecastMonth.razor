@@ -1,0 +1,80 @@
+<section class="gwios-forecast-month">
+    <header class="gwios-forecast-month-header">
+        <h3 class="gwios-forecast-month-title">@Month.Month.ToString("MMMM yyyy", GermanCulture)</h3>
+        <span class="gwios-forecast-month-balance">
+            Saldo
+            <span class="gwios-amount @(Month.Balance >= 0 ? "gwios-amount--success" : "gwios-amount--danger")">
+                @FormatSignedAmount(Month.Balance)
+            </span>
+        </span>
+    </header>
+    @RenderSection("Einnahmen", Month.Incomes, Month.IncomeTotal, "gwios-amount--success")
+    @RenderSection("Ausgaben", Month.Expenses, Month.ExpenseTotal, "gwios-amount--danger")
+</section>
+
+@code {
+    private static readonly System.Globalization.CultureInfo GermanCulture =
+        System.Globalization.CultureInfo.GetCultureInfo("de-DE");
+
+    /// <summary>
+    /// The forecast month to show: its income and expenses as tables, with their totals and the balance.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public RecurringItemForecastMonth Month { get; set; } = default!;
+
+    /// <summary>
+    /// All categories, so each entry shows the color of its root category.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public IReadOnlyList<Category> Categories { get; set; } = [];
+
+    private RenderFragment RenderSection(
+        string title,
+        IReadOnlyList<RecurringItemForecastEntry> entries,
+        decimal total,
+        string amountClass)
+        => @<div class="gwios-forecast-section">
+               <div class="gwios-forecast-section-header">
+                   <span class="gwios-forecast-section-title">@title</span>
+                   <span class="gwios-amount @amountClass">@FormatAmount(total)</span>
+               </div>
+               @if (entries.Count == 0)
+               {
+                   <p class="gwios-forecast-empty">Keine fälligen @title.</p>
+               }
+               else
+               {
+                   <table class="gwios-table gwios-table--compact">
+                       <thead>
+                           <tr>
+                               <th scope="col">Datum</th>
+                               <th scope="col">Name</th>
+                               <th scope="col">Kategorie</th>
+                               <th scope="col" class="gwios-table-end">Betrag</th>
+                           </tr>
+                       </thead>
+                       <tbody>
+                           @foreach (RecurringItemForecastEntry entry in entries)
+                           {
+                               <tr>
+                                   <td data-label="Datum" class="gwios-forecast-date">@entry.Date.ToString("dd.MM.", GermanCulture)</td>
+                                   <td data-label="Name" class="gwios-forecast-name">@entry.Name</td>
+                                   <td data-label="Kategorie" class="gwios-forecast-category">
+                                       <GwiOSCategoryLabel Categories="Categories" CategoryId="entry.CategoryId" />
+                                   </td>
+                                   <td data-label="Betrag" class="gwios-table-end gwios-forecast-amount gwios-amount @amountClass">
+                                       @FormatAmount(entry.Amount)
+                                   </td>
+                               </tr>
+                           }
+                       </tbody>
+                   </table>
+               }
+           </div>;
+
+    private static string FormatAmount(decimal value)
+        => value.ToString("C", GermanCulture);
+
+    private static string FormatSignedAmount(decimal value)
+        => (value >= 0 ? "+ " : "– ") + Math.Abs(value).ToString("C", GermanCulture);
+}

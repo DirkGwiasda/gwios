@@ -4,6 +4,9 @@ using GwiOS.Core.Haushaltsbuch.Domain.Managers.CategoryManagement.Contracts.Mode
 using GwiOS.Core.Haushaltsbuch.Domain.Managers.RecurringItemManagement.Contracts.Models;
 using GwiOS.Core.Haushaltsbuch.Domain.Workflows.HaushaltsbuchOverview.Contracts;
 using GwiOS.Core.Haushaltsbuch.Domain.Workflows.HaushaltsbuchOverview.Contracts.Models;
+using GwiOS.Core.Haushaltsbuch.Domain.Workflows.RecurringItemForecast.Contracts;
+using GwiOS.Core.Haushaltsbuch.Domain.Workflows.RecurringItemForecast.Contracts.Models;
+using GwiOS.WebUI.Api.Haushaltsbuch.Contracts;
 using GwiOS.WebUI.Components.GwiOS.Components;
 using Microsoft.AspNetCore.Components;
 
@@ -11,7 +14,8 @@ namespace GwiOS.WebUI.Components.Pages.Haushaltsbuch;
 
 /// <summary>
 /// Berichte tab of the Haushaltsbuch: Soll/Ist against the recurring items, an expense breakdown donut and an
-/// income/expense trend, all over a selectable range of months.
+/// income/expense trend, all over a selectable range of months, and a forecast of the recurring items from the current
+/// month on, also offered as PDF.
 /// </summary>
 public partial class Berichte
 {
@@ -28,12 +32,22 @@ public partial class Berichte
     private List<Category> _categories = [];
     private List<RecurringItem> _recurringItems = [];
     private List<Booking> _rangeBookings = [];
+    private IReadOnlyList<RecurringItemForecastMonth> _forecastMonths = [];
 
     [Inject]
     private IHaushaltsbuchOverviewWorkflow OverviewWorkflow { get; set; } = default!;
 
     [Inject]
+    private IRecurringItemForecastWorkflow ForecastWorkflow { get; set; } = default!;
+
+    [Inject]
     private TimeProvider TimeProvider { get; set; } = default!;
+
+    private string ForecastHint
+        => _forecastMonths.Count == 0
+            ? "Aktive Fixposten"
+            : $"Aktive Fixposten, {MonthNames[_forecastMonths[0].Month.Month - 1]} {_forecastMonths[0].Month.Year} – "
+                + $"{MonthNames[_forecastMonths[^1].Month.Month - 1]} {_forecastMonths[^1].Month.Year}";
 
     private string SelectedRangeItem
         => _range switch { "year" => "Aktuelles Jahr", "last6" => "Letzte 6 Monate", _ => "Letzte 12 Monate" };
@@ -76,7 +90,10 @@ public partial class Berichte
         => [.. RangeMonthStarts.Select(month => MonthNames[month.Month - 1][..3])];
 
     protected override async Task OnInitializedAsync()
-        => await LoadAsync();
+    {
+        await LoadAsync();
+        await LoadForecastAsync();
+    }
 
     private async Task SelectRangeAsync(string item)
     {
@@ -226,6 +243,16 @@ public partial class Berichte
         _categories = overview.Categories;
         _recurringItems = overview.RecurringItems;
         _rangeBookings = overview.Bookings;
+    }
+
+    // The forecast always starts with the current month; the range selection of the other reports does not apply.
+    private async Task LoadForecastAsync()
+    {
+        DateTimeOffset now = TimeProvider.GetLocalNow();
+        RecurringItemForecastData forecast = await ForecastWorkflow.GetForecastAsync(
+            new DateOnly(now.Year, now.Month, 1),
+            IRecurringItemForecastPdfEndpoint.MonthCount);
+        _forecastMonths = forecast.Months;
     }
 
     private sealed record SollIstRow(string Label, decimal Plan, decimal Actual, int PlanPercentage, int ActualPercentage);

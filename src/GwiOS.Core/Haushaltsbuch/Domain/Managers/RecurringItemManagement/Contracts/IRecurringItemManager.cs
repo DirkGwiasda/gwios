@@ -32,4 +32,11 @@ public interface IRecurringItemManager
     /// Deletes the recurring item with the given ID. Does nothing if no such recurring item is stored.
     /// </summary>
     Task DeleteRecurringItemAsync(Guid recurringItemId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns the days in the month of <paramref name="month"/> on which the given recurring item falls due, in
+    /// ascending order; empty if it does not fall due in that month. Weekly items fall due on the 1st, 8th, 15th and
+    /// 22nd, quarterly and yearly items from their start month on. Whether the item is active is not considered.
+    /// </summary>
+    IReadOnlyList<DateOnly> GetDueDates(RecurringItem recurringItem, DateOnly month);
 }

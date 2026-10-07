@@ -8,10 +8,12 @@ namespace GwiOS.Core.Haushaltsbuch.Domain.Managers.RecurringItemManagement;
 internal sealed class RecurringItemManager(
     IRecurringItemRepository recurringItemRepository,
     IRecurringItemValidator recurringItemValidator,
+    IRecurringItemScheduler recurringItemScheduler,
     ILogger<RecurringItemManager> logger) : IRecurringItemManager
 {
     private readonly IRecurringItemRepository _recurringItemRepository = recurringItemRepository;
     private readonly IRecurringItemValidator _recurringItemValidator = recurringItemValidator;
+    private readonly IRecurringItemScheduler _recurringItemScheduler = recurringItemScheduler;
     private readonly ILogger<RecurringItemManager> _logger = logger;
 
     public async Task<RecurringItem> CreateRecurringItemAsync(
@@ -39,6 +41,9 @@ internal sealed class RecurringItemManager(
         await _recurringItemRepository.DeleteAsync(recurringItemId, cancellationToken);
         _logger.LogInformation("Recurring item deleted.", CreateRecurringItemIdData(recurringItemId));
     }
+
+    public IReadOnlyList<DateOnly> GetDueDates(RecurringItem recurringItem, DateOnly month)
+        => _recurringItemScheduler.GetDueDates(recurringItem, month);
 
     private void ThrowIfInvalid(RecurringItem recurringItem)
     {

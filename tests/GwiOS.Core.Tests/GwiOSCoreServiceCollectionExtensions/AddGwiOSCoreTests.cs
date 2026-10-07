@@ -10,6 +10,10 @@ using GwiOS.Core.CrossCutting.Logging.Infrastructure;
 using GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement;
 using GwiOS.Core.CrossCutting.Persons.Domain.Managers.PersonManagement.Contracts;
 using GwiOS.Core.CrossCutting.Persons.Infrastructure;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.RecurringItemManagement;
+using GwiOS.Core.Haushaltsbuch.Domain.Managers.RecurringItemManagement.Contracts;
+using GwiOS.Core.Haushaltsbuch.Domain.Workflows.RecurringItemForecast;
+using GwiOS.Core.Haushaltsbuch.Domain.Workflows.RecurringItemForecast.Contracts;
 using GwiOS.Core.Satellites.Domain.Managers.MeasurementManagement;
 using GwiOS.Core.Satellites.Domain.Managers.MeasurementManagement.Contracts;
 using GwiOS.Core.Satellites.Domain.Managers.SatelliteCandidateManagement;
@@ -101,6 +105,16 @@ public sealed class AddGwiOSCoreTests : IDisposable
         DatabaseBackupOptions options = _serviceProvider.GetRequiredService<DatabaseBackupOptions>();
 
         Assert.Equal(ConnectionString, options.ConnectionString);
+    }
+
+    [Theory]
+    [InlineData(typeof(IRecurringItemScheduler), typeof(RecurringItemScheduler))]
+    [InlineData(typeof(IRecurringItemForecastWorkflow), typeof(RecurringItemForecastWorkflow))]
+    public void RegistersTheRecurringItemForecastServices(Type serviceType, Type implementationType)
+    {
+        object service = _scope.ServiceProvider.GetRequiredService(serviceType);
+
+        Assert.IsType(implementationType, service);
     }
 
     [Fact]

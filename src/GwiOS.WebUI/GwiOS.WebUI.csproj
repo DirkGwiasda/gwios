@@ -13,11 +13,17 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.12" />
+    <PackageReference Include="QuestPDF" Version="2026.9.1" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Only the GwiOS logger may be used; the implicit using would make ILogger<T> and LogLevel ambiguous. -->
     <Using Remove="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Inter for the PDF documents; QuestPDF reads them from the assembly, the container has no system fonts. -->
+    <EmbeddedResource Include="Pdf\Fonts\*.ttf" />
   </ItemGroup>
 
   <ItemGroup>

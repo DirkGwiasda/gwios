@@ -41,7 +41,7 @@ internal sealed class RecurringBookingGenerationWorkflow(
         List<ProposedBooking> proposedBookings = [];
         foreach (RecurringItem item in activeItems)
         {
-            foreach (DateOnly date in ComputeOccurrenceDates(item, firstDay, lastDay))
+            foreach (DateOnly date in _recurringItemManager.GetDueDates(item, firstDay))
             {
                 if (alreadyBooked.Contains((item.Id, date)))
                 {
@@ -91,33 +91,6 @@ internal sealed class RecurringBookingGenerationWorkflow(
                 ["Month"] = FirstDayOf(month).ToString("O"),
                 ["ConfirmedCount"] = selectedBookings.Count.ToString()
             });
-    }
-
-    // Mirrors the interval rules of the design template: weekly items always fall due, on the 1st, 8th, 15th and
-    // 22nd; quarterly and yearly items are phased from their start month.
-    private static List<DateOnly> ComputeOccurrenceDates(RecurringItem item, DateOnly firstDay, DateOnly lastDay)
-    {
-        int monthIndex0 = firstDay.Month - 1;
-        bool isDue = item.Interval switch
-        {
-            RecurringInterval.Weekly or RecurringInterval.Monthly => true,
-            RecurringInterval.Quarterly => (((monthIndex0 - item.StartMonth) % 3) + 3) % 3 == 0,
-            RecurringInterval.Yearly => monthIndex0 == item.StartMonth,
-            _ => false
-        };
-        if (!isDue)
-        {
-            return [];
-        }
-
-        if (item.Interval == RecurringInterval.Weekly)
-        {
-            return [.. new[] { 1, 8, 15, 22 }
-                .Select(day => new DateOnly(firstDay.Year, firstDay.Month, Math.Min(day, lastDay.Day)))];
-        }
-
-        int dueDay = Math.Min(item.DueDay, lastDay.Day);
-        return [new DateOnly(firstDay.Year, firstDay.Month, dueDay)];
     }
 
     private static DateOnly FirstDayOf(DateOnly month)

@@ -9,11 +9,15 @@ using GwiOS.Core.Satellites.Domain.Managers.SatelliteManagement.Contracts;
 using GwiOS.Core.ToDos.Domain.Managers.ToDoManagement.Contracts;
 using GwiOS.WebUI.Api.Backup;
 using GwiOS.WebUI.Api.Backup.Contracts;
+using GwiOS.WebUI.Api.Haushaltsbuch;
+using GwiOS.WebUI.Api.Haushaltsbuch.Contracts;
 using GwiOS.WebUI.Api.Satellites;
 using GwiOS.WebUI.Api.Satellites.Contracts;
 using GwiOS.WebUI.BackgroundServices;
 using GwiOS.WebUI.Components;
 using GwiOS.WebUI.E2E;
+using GwiOS.WebUI.Pdf;
+using GwiOS.WebUI.Pdf.Contracts;
 using GwiOS.WebUI.StatusMessages;
 using GwiOS.WebUI.StatusMessages.Contracts;
 using Microsoft.AspNetCore.Authentication;
@@ -48,6 +52,9 @@ public class Program
         builder.Services.AddScoped<IStatusMessageService, StatusMessageService>();
         builder.Services.AddScoped<ISatellitePingEndpoint, SatellitePingEndpoint>();
         builder.Services.AddScoped<IDatabaseBackupEndpoint, DatabaseBackupEndpoint>();
+        builder.Services.AddScoped<IRecurringItemForecastPdfEndpoint, RecurringItemForecastPdfEndpoint>();
+        builder.Services.AddScoped<IRecurringItemForecastPdfRenderer, RecurringItemForecastPdfRenderer>();
+        builder.Services.AddSingleton<IQuestPdfConfigurator, QuestPdfConfigurator>();
         builder.Services.Configure<MeasurementPollingOptions>(
             builder.Configuration.GetSection(MeasurementPollingOptions.SectionName));
         builder.Services.AddHostedService<MeasurementPollingService>();
@@ -119,6 +126,7 @@ public class Program
 
         MapSatelliteApi(app);
         MapBackupApi(app);
+        MapHaushaltsbuchApi(app);
         app.MapStaticAssets();
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
@@ -142,6 +150,13 @@ public class Program
         => app.MapGet(
                 $"{ApiPathPrefix}/backup",
                 (IDatabaseBackupEndpoint endpoint, CancellationToken cancellationToken)
+                    => endpoint.HandleAsync(cancellationToken))
+            .RequireAuthorization();
+
+    private static void MapHaushaltsbuchApi(WebApplication app)
+        => app.MapGet(
+                $"{ApiPathPrefix}/haushaltsbuch/fixkosten-prognose",
+                (IRecurringItemForecastPdfEndpoint endpoint, CancellationToken cancellationToken)
                     => endpoint.HandleAsync(cancellationToken))
             .RequireAuthorization();
 
