@@ -1,3 +1,7 @@
+using GwiOS.Core.CrossCutting.Backup.Domain.Managers.DatabaseBackupManagement;
+using GwiOS.Core.CrossCutting.Backup.Domain.Managers.DatabaseBackupManagement.Contracts;
+using GwiOS.Core.CrossCutting.Backup.Domain.Managers.DatabaseBackupManagement.Contracts.Models;
+using GwiOS.Core.CrossCutting.Backup.Infrastructure;
 using GwiOS.Core.CrossCutting.Logging;
 using GwiOS.Core.CrossCutting.Logging.Contracts;
 using GwiOS.Core.CrossCutting.Logging.Domain.Contracts;
@@ -72,6 +76,31 @@ public sealed class AddGwiOSCoreTests : IDisposable
         ILogger<AddGwiOSCoreTests> logger = _scope.ServiceProvider.GetRequiredService<ILogger<AddGwiOSCoreTests>>();
 
         Assert.IsType<DefaultLogger<AddGwiOSCoreTests>>(logger);
+    }
+
+    [Fact]
+    public void RegistersThePgDumpRepositoryAsDatabaseBackupRepository()
+    {
+        IDatabaseBackupRepository databaseBackupRepository =
+            _scope.ServiceProvider.GetRequiredService<IDatabaseBackupRepository>();
+
+        Assert.IsType<DatabaseBackupPgDumpRepository>(databaseBackupRepository);
+    }
+
+    [Fact]
+    public void RegistersTheDatabaseBackupManager()
+    {
+        IDatabaseBackupManager databaseBackupManager = _scope.ServiceProvider.GetRequiredService<IDatabaseBackupManager>();
+
+        Assert.IsType<DatabaseBackupManager>(databaseBackupManager);
+    }
+
+    [Fact]
+    public void HandsTheFullConnectionStringToTheDatabaseBackup()
+    {
+        DatabaseBackupOptions options = _serviceProvider.GetRequiredService<DatabaseBackupOptions>();
+
+        Assert.Equal(ConnectionString, options.ConnectionString);
     }
 
     [Fact]

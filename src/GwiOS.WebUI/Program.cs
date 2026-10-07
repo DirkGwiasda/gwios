@@ -7,6 +7,8 @@ using GwiOS.Core.Haushaltsbuch.Domain.Managers.MonthReviewManagement.Contracts;
 using GwiOS.Core.Haushaltsbuch.Domain.Managers.RecurringItemManagement.Contracts;
 using GwiOS.Core.Satellites.Domain.Managers.SatelliteManagement.Contracts;
 using GwiOS.Core.ToDos.Domain.Managers.ToDoManagement.Contracts;
+using GwiOS.WebUI.Api.Backup;
+using GwiOS.WebUI.Api.Backup.Contracts;
 using GwiOS.WebUI.Api.Satellites;
 using GwiOS.WebUI.Api.Satellites.Contracts;
 using GwiOS.WebUI.BackgroundServices;
@@ -45,6 +47,7 @@ public class Program
         // Scoped, so every circuit and thus every user session has status messages of its own.
         builder.Services.AddScoped<IStatusMessageService, StatusMessageService>();
         builder.Services.AddScoped<ISatellitePingEndpoint, SatellitePingEndpoint>();
+        builder.Services.AddScoped<IDatabaseBackupEndpoint, DatabaseBackupEndpoint>();
         builder.Services.Configure<MeasurementPollingOptions>(
             builder.Configuration.GetSection(MeasurementPollingOptions.SectionName));
         builder.Services.AddHostedService<MeasurementPollingService>();
@@ -112,6 +115,7 @@ public class Program
         app.MapGet("/logout", () => Results.SignOut(new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/" }, [CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme]));
 
         MapSatelliteApi(app);
+        MapBackupApi(app);
         app.MapStaticAssets();
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
@@ -129,6 +133,14 @@ public class Program
             .AllowAnonymous()
             .DisableAntiforgery()
             .WithMetadata(new RequestSizeLimitAttribute(MaxSatellitePingBodyBytes));
+
+    // Unlike the satellite API, the backup is for signed-in users: an anonymous request is sent to the sign-in.
+    private static void MapBackupApi(WebApplication app)
+        => app.MapGet(
+                $"{ApiPathPrefix}/backup",
+                (IDatabaseBackupEndpoint endpoint, CancellationToken cancellationToken)
+                    => endpoint.HandleAsync(cancellationToken))
+            .RequireAuthorization();
 
     // Environment variables are part of the configuration; their names are used as keys unchanged.
     private static string GetGwiOSConnectionString(IConfiguration configuration)

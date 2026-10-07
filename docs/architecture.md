@@ -19,7 +19,7 @@ Abhängigkeiten zeigen nur in eine Richtung: `GwiOS.WebUI` → `GwiOS.Core`. Der
 
 Eine Domäne ist ein fachlicher Bereich von GwiOS, z. B. `ToDos`, `Haushaltsbuch` oder `Satellites`. Jede Domäne
 ist ein Ordner direkt unter `GwiOS.Core`. Was mehrere Domänen brauchen, liegt unter
-`GwiOS.Core/CrossCutting` (derzeit `Logging` und `Persons`) und darf von allen Domänen genutzt werden.
+`GwiOS.Core/CrossCutting` (derzeit `Logging`, `Persons` und `Backup`) und darf von allen Domänen genutzt werden.
 Eine fachliche Domäne nutzt nie eine andere fachliche Domäne direkt.
 
 Aufbau einer Domäne:
@@ -228,3 +228,12 @@ Design-Vorlage (`docs/UI/GwiOS.WebUI.Design.html`, Modul „Haushaltsbuch (HaBu)
   18.09.2026). Wann genau der Monats-Check auslöst und ob ein Verlassen ohne Bestätigung den Monat ungeprüft
   lässt, ist ein Vorschlag von Claude und noch nicht von Dirk bestätigt — siehe devplan, Abschnitt
   „Haushaltsbuch“, offene Fragen.
+- Datensicherung (07.10.2026, Weg und Umfang von Dirk gewählt): eigene Querschnittsdomäne `CrossCutting/Backup` mit
+  `DatabaseBackupManagement`, weil eine Sicherung der ganzen Datenbank zu keiner Domäne gehört und kein Repository
+  einer anderen Domäne fremde Tabellen lesen darf. `DatabaseBackupPgDumpRepository` ruft `pg_dump` (Custom-Format)
+  auf; die Daten des Schemas `logging` bleiben außen vor, seine leere Tabelle kommt mit. Der Dump entsteht erst
+  vollständig in einer temporären Datei und wird dann gesendet, damit ein Fehler von `pg_dump` nicht als halbe, scheinbar
+  gültige Datei beim Benutzer landet; die Datei verschwindet mit dem Schließen des Streams. Das Passwort geht über
+  `PGPASSWORD` an `pg_dump`, nicht über die Kommandozeile. Host ist der Endpunkt `GET /api/backup` (angemeldete
+  Benutzer, keine eigene Rolle — Vorgabe von Dirk: nur Familienmitglieder haben Konten); die Seite
+  `/admin/datensicherung` verlinkt ihn als Download.

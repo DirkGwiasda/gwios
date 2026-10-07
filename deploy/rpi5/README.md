@@ -18,6 +18,7 @@ Den Server selbst (Docker, Postgres, Keycloak, Traefik) beschreibt das Repo
 | Datei | Läuft auf | Aufgabe |
 |---|---|---|
 | `Deploy-WebUI.ps1` | Windows | Secrets lesen, testen, Image bauen, übertragen, `apply.sh` starten, auf die App warten |
+| `Dockerfile` | Windows (Docker Desktop) | Image aus der veröffentlichten WebUI und `pg_dump` für die Datensicherung |
 | `apply.sh` | rpi5 | Voraussetzungen prüfen, `.env` schreiben, Schlüsselverzeichnis anlegen, Image laden, Container starten, alte Images löschen |
 | `docker-compose.yml` | rpi5 | Definition des Containers `gwios-webui` |
 
@@ -40,9 +41,11 @@ der `.env`.
    Skript sofort ab.
 2. **Tests** — `dotnet test --solution src/GwiOS.slnx`. Die Integrationstests
    brauchen wie immer `GwiOS.DB.TestConnectionstring`.
-3. **Image bauen** — `dotnet publish /t:PublishContainer` für `linux-arm64`.
-   Das .NET SDK baut das Image selbst: kein Dockerfile, kein Docker Desktop,
-   keine Emulation. Ergebnis ist ein Archiv (~100 MB), keine Registry.
+3. **Image bauen** — `dotnet publish` für `linux-arm64` in einen temporären
+   Ordner, daraus baut `docker build --platform linux/arm64` mit dem
+   `Dockerfile` das Image, `docker save` schreibt es als Archiv (keine
+   Registry). Kompiliert wird auf dem Windows-Rechner; unter Emulation läuft
+   nur die Installation von `pg_dump` im Dockerfile.
 4. **Übertragen** — `docker-compose.yml`, `apply.sh` und das Archiv per `scp`.
 5. **`apply.sh`** auf dem Pi, die `.env` bekommt es über stdin.
 6. **Prüfen** — das Skript fragt `https://webui.gwios.gwiasda.net/` bis zu
@@ -109,6 +112,16 @@ Wer in der Gruppe `docker` ist, sieht die Werte trotzdem über
 
 ---
 
+## Voraussetzungen auf dem Windows-Rechner
+
+| Voraussetzung | Wozu |
+|---|---|
+| .NET SDK 10, `git`, `ssh`, `scp` | Testen, Veröffentlichen, Übertragen |
+| Docker Desktop, gestartet | Image bauen; es emuliert den ARM-Prozessor des Pi von selbst. Das Skript prüft vor den Tests, ob Docker antwortet |
+| Internetzugang | Das Dockerfile lädt das .NET-Basis-Image und `pg_dump` aus dem PostgreSQL-Paketarchiv |
+
+---
+
 ## Voraussetzungen auf dem Server
 
 Das Skript prüft die ersten vier selbst und bricht mit einer Meldung ab.
@@ -154,6 +167,16 @@ Damit ein Neuaufbau des Pi sie wieder anlegt, gehört dasselbe als Skript nach
   `https://keycloak.gwios.gwiasda.net` erreichen, weil das der Aussteller in
   den Tokens ist. Der Eintrag in `extra_hosts` führt direkt zu Traefik auf dem
   Pi, statt vom DNS der FritzBox abzuhängen.
+- **Dockerfile statt `PublishContainer`** (07.10.2026): Die Datensicherung im
+  Admin-Bereich braucht `pg_dump` im Container, und das .NET SDK kann ohne
+  Dockerfile keine Pakete installieren. Basis bleibt dasselbe Microsoft-Image
+  `aspnet:10.0` mit demselben Benutzer `app` (UID `1654`).
+- **`pg_dump` in der Hauptversion des Servers**: `pg_dump` sichert nur
+  Server derselben oder einer älteren Hauptversion. Das Skript setzt sie über
+  `$PostgresClientMajorVersion` (derzeit 17, Server 17.11) — **nach einem
+  Upgrade des Postgres auf dem Pi dort mitziehen**, sonst schlägt die
+  Datensicherung fehl. Installiert wird aus dem offiziellen PostgreSQL-Archiv,
+  weil Ubuntu nur eine feste Version mitbringt.
 - **Keine Registry**: Das Image geht als Archiv per `scp`. Bei jedem Deploy
   werden so auch die Schichten des Basis-Images übertragen, im Heimnetz
   unerheblich.
@@ -183,3 +206,6 @@ nächsten Deploy.
 | `502 - Traefik erreicht den Container nicht …` | Container läuft nicht oder startet immer wieder neu. Meist erreicht die App die Datenbank nicht — sie startet ohne Datenbank nicht. Die Log-Zeilen zeigen den Grund |
 | Anmeldung scheitert mit *„Invalid parameter: redirect_uri"* | `ASPNETCORE_FORWARDEDHEADERS_ENABLED` fehlt oder wirkt nicht |
 | `sudo ohne Passwort …` | Nur beim ersten Deploy: Schlüsselverzeichnis anlegen braucht `sudo` |
+| `Docker ist nicht erreichbar …` | Docker Desktop ist nicht gestartet |
+| `docker build` scheitert beim Herunterladen | Kein Internet, oder das PostgreSQL-Archiv bietet die Version aus `$PostgresClientMajorVersion` nicht an |
+| Datensicherung meldet „konnte nicht erstellt werden“, im Log `server version mismatch` | `$PostgresClientMajorVersion` ist kleiner als die Version des Servers |

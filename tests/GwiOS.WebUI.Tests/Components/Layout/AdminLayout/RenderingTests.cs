@@ -19,8 +19,10 @@ public sealed class RenderingTests : BunitContext
             .Add(component => component.Body, body));
 
         IReadOnlyList<IElement> tabs = layout.FindAll(".gwios-tab-nav a");
-        Assert.Equal(["Logging", "Benutzerverwaltung", "Satelliten"], tabs.Select(tab => tab.TextContent));
-        Assert.Equal(["admin/logging", "admin/benutzer", "admin/satelliten"], tabs.Select(tab => tab.GetAttribute("href")));
+        Assert.Equal(["Logging", "Benutzerverwaltung", "Satelliten", "Datensicherung"], tabs.Select(tab => tab.TextContent));
+        Assert.Equal(
+            ["admin/logging", "admin/benutzer", "admin/satelliten", "admin/datensicherung"],
+            tabs.Select(tab => tab.GetAttribute("href")));
         Assert.Equal("Seite", layout.Find("p.page").TextContent);
     }
 

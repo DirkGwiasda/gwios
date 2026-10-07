@@ -293,9 +293,41 @@ Fertig: Theme/Layout, GwiOS-Komponenten (`Components/GwiOS.Components`), Seiten 
   beides bräuchte JavaScript.
 - `wwwroot/lib/bootstrap` wird nicht mehr verwendet und kann entfernt werden.
 
+## Datensicherung (GwiOS.Core/CrossCutting/Backup, WebUI unter `/admin/datensicherung`)
+
+Im Admin-Bereich lädt „Sicherung herunterladen“ eine Sicherung der Datenbank herunter (Wunsch von Dirk, 07.10.2026).
+
+Fertig: `DatabaseBackupManager`, `DatabaseBackupPgDumpRepository`, Endpunkt `GET /api/backup`, Seite und Tab
+„Datensicherung“, Dockerfile mit `pg_dump` 17, `Deploy-WebUI.ps1` baut damit. Unit-Tests grün (Core 544,
+WebUI 420).
+
+- [ ] Erster Deploy mit Dockerfile: `docker build` lief in der Sandbox nicht (kein Docker); das Skript wurde nur auf
+      Syntax geprüft (PowerShell 7), `dotnet publish` für linux-arm64 und die Verfügbarkeit von
+      `postgresql-client-17` (17.11) für Ubuntu 24.04/arm64 im PostgreSQL-Archiv sind geprüft.
+- [ ] Eine heruntergeladene Sicherung einmal probehalber wiederherstellen (z. B. mit `pg_restore` in eine leere
+      Datenbank), erst dann ist die Sicherung erwiesen.
+
+### Entscheidungen
+
+- Weg: `pg_dump` im Container statt eines eigenen Exports aus der App — Standardformat, Wiederherstellung mit
+  `pg_restore` oder DBeaver (Dirk, 07.10.2026).
+- Umfang: ganze Datenbank `gwios_db` ohne die Daten des Logs (`--exclude-table-data='logging.*'`) (Dirk).
+- Zugriff: jeder angemeldete Benutzer, keine Keycloak-Rolle — es gibt nur Familienmitglieder als Benutzer (Dirk).
+- Die Sicherung bleibt nicht auf dem Server: temporäre Datei im Container, gelöscht nach dem Senden.
+- Schlägt die Sicherung fehl, leitet der Endpunkt auf `/admin/datensicherung?fehlgeschlagen=true` zurück, die Seite
+  zeigt einen Hinweis; die Ursache steht im Log (der Link wird im Browser geöffnet, ein Fehlerstatus hinterließe eine
+  leere Seite).
+- `DatabaseBackupPgDumpRepository` hat keine Integrationstests (Vorgabe von Dirk, 07.10.2026): Sie bräuchten `pg_dump`
+  auch auf dem Rechner, der testet und deployt. Geprüft wird die Sicherung durch den Download nach dem Deploy und
+  eine Probe-Wiederherstellung.
+- Stolperstein: Die Hauptversion von `pg_dump` (`$PostgresClientMajorVersion` in `Deploy-WebUI.ps1`) muss nach einem
+  Postgres-Upgrade auf dem Pi mitgezogen werden.
+
 ## Deployment (deploy/rpi5)
 
-Fertig: `Deploy-WebUI.ps1`, `apply.sh`, `docker-compose.yml`; läuft unter `https://webui.gwios.gwiasda.net`.
+Fertig: `Deploy-WebUI.ps1`, `apply.sh`, `docker-compose.yml`, `Dockerfile`; läuft unter
+`https://webui.gwios.gwiasda.net`. Seit 07.10.2026 baut das Skript das Image mit Docker Desktop aus dem `Dockerfile`
+(für `pg_dump`) statt mit `dotnet publish /t:PublishContainer`; Bedienung unverändert.
 
 - [ ] Infrastruktur-Repo: `postgres-init/` um Benutzer `gwios_user` und Datenbank `gwios_db` ergänzen, damit
       ein Neuaufbau des Pi sie wieder anlegt.

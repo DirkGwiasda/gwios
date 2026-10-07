@@ -256,6 +256,9 @@ Generated_Code/
 # because we have git ;-)
 _UpgradeReport_Files/
 Backup*/
+# GwiOS: Die Ordner der Datensicherung sind Quellcode, keine Konvertierungs-Backups.
+!**/CrossCutting/Backup/
+!**/Api/Backup/
 UpgradeLog*.XML
 UpgradeLog*.htm
 ServiceFabricBackup/

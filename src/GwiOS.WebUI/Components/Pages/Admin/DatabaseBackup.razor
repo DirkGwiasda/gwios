@@ -1,0 +1,38 @@
+@page "/admin/datensicherung"
+
+<PageTitle>Datensicherung · gwi-os</PageTitle>
+
+<div class="gwios-page">
+    <h1>Datensicherung</h1>
+    <p class="gwios-database-backup-intro">
+        Lädt eine Sicherung der GwiOS-Datenbank herunter, um sie außerhalb des Servers aufzubewahren. Sie enthält alle
+        Daten außer dem Log und bleibt nicht auf dem Server liegen.
+    </p>
+
+    @if (HasFailed)
+    {
+        <p class="gwios-database-backup-error" role="alert">
+            Die Sicherung konnte nicht erstellt werden. Die Ursache steht im Log.
+        </p>
+    }
+
+    <div class="gwios-toolbar-panel">
+        @* A plain link, so the browser handles the download itself; "download" keeps Blazor from routing it. *@
+        <a class="gwios-button" href="api/backup" download data-enhance-nav="false">Sicherung herunterladen</a>
+        <span class="gwios-database-backup-hint">
+            Datei im Format von <code>pg_dump</code> (<code>.dump</code>), wiederherstellbar mit <code>pg_restore</code>
+            oder in DBeaver über „Restore“.
+        </span>
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// Set by the backup endpoint when it redirects here because the backup failed.
+    /// </summary>
+    [SupplyParameterFromQuery(Name = "fehlgeschlagen")]
+    public bool? Failed { get; set; }
+
+    private bool HasFailed
+        => Failed == true;
+}

@@ -1,3 +1,7 @@
+using GwiOS.Core.CrossCutting.Backup.Domain.Managers.DatabaseBackupManagement;
+using GwiOS.Core.CrossCutting.Backup.Domain.Managers.DatabaseBackupManagement.Contracts;
+using GwiOS.Core.CrossCutting.Backup.Domain.Managers.DatabaseBackupManagement.Contracts.Models;
+using GwiOS.Core.CrossCutting.Backup.Infrastructure;
 using GwiOS.Core.CrossCutting.Logging;
 using GwiOS.Core.CrossCutting.Logging.Contracts;
 using GwiOS.Core.CrossCutting.Logging.Domain.Contracts;
@@ -75,6 +79,7 @@ public static class GwiOSCoreServiceCollectionExtensions
         services.AddNpgsqlDataSource(connectionString);
         services.TryAddSingleton(TimeProvider.System);
         AddLogging(services);
+        AddBackup(services, connectionString);
         AddPersons(services);
         AddToDos(services);
         AddSatellites(services);
@@ -87,6 +92,13 @@ public static class GwiOSCoreServiceCollectionExtensions
         services.AddSingleton(typeof(ILogger<>), typeof(DefaultLogger<>));
         services.AddScoped<ILogEntryRepository, LogEntryPostgresRepository>();
         services.AddScoped<ILogEntryManager, LogEntryManager>();
+    }
+
+    private static void AddBackup(IServiceCollection services, string connectionString)
+    {
+        services.AddSingleton(new DatabaseBackupOptions { ConnectionString = connectionString });
+        services.AddScoped<IDatabaseBackupRepository, DatabaseBackupPgDumpRepository>();
+        services.AddScoped<IDatabaseBackupManager, DatabaseBackupManager>();
     }
 
     private static void AddPersons(IServiceCollection services)

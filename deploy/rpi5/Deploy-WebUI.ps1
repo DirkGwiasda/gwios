@@ -1,7 +1,7 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    Baut die GwiOS WebUI als Container-Image und deployt sie auf den rpi5.
+    Baut die GwiOS WebUI als Container-Image (Dockerfile in diesem Ordner) und deployt sie auf den rpi5.
 
 .DESCRIPTION
     Kann bei jedem Deploy erneut ausgeführt werden. Ablauf, Voraussetzungen und die
@@ -24,6 +24,9 @@ $KeysDirectory = '/mnt/ssd/gwios-webui/keys'
 $ImageName = 'gwios-webui'
 $HealthCheckUrl = 'https://webui.gwios.gwiasda.net/'
 $HealthCheckTimeoutSeconds = 90
+# Hauptversion von pg_dump im Image für die Datensicherung. Muss mindestens die Hauptversion des Postgres auf dem
+# rpi5 sein (derzeit 17.11) - nach einem Upgrade des Servers hier mitziehen.
+$PostgresClientMajorVersion = 17
 
 # Schlüssel in der .env auf dem Server -> Benutzer-Umgebungsvariable auf diesem Rechner. Es sind
 # dieselben Variablen, mit denen die App in der Entwicklung läuft.
@@ -35,6 +38,7 @@ $SecretVariables = [ordered]@{
 $RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $WebUIProject = Join-Path $RepositoryRoot 'src\GwiOS.WebUI\GwiOS.WebUI.csproj'
 $Solution = Join-Path $RepositoryRoot 'src\GwiOS.slnx'
+$Dockerfile = Join-Path $PSScriptRoot 'Dockerfile'
 $Utf8WithoutBom = New-Object System.Text.UTF8Encoding $false
 
 Add-Type -AssemblyName System.Net.Http
@@ -54,12 +58,34 @@ function Assert-ExitCode([string] $Action)
 
 function Assert-ToolsAvailable
 {
-    foreach ($tool in 'dotnet', 'git', 'ssh', 'scp')
+    foreach ($tool in 'dotnet', 'docker', 'git', 'ssh', 'scp')
     {
         if (-not (Get-Command $tool -ErrorAction SilentlyContinue))
         {
             throw "'$tool' wurde nicht gefunden."
         }
+    }
+    # Docker antwortet erst, wenn Docker Desktop läuft - besser jetzt als nach den Tests.
+    Invoke-Quietly { docker info }
+    if ($LASTEXITCODE -ne 0)
+    {
+        throw 'Docker ist nicht erreichbar - läuft Docker Desktop?'
+    }
+}
+
+function Invoke-Quietly([scriptblock] $Command)
+{
+    # Windows PowerShell macht umgeleitete stderr-Zeilen nativer Programme zu Fehlern, und "Stop" bricht dann ab -
+    # auch bei bloßen Warnungen. Den Erfolg zeigt hier allein $LASTEXITCODE.
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try
+    {
+        & $Command *> $null
+    }
+    finally
+    {
+        $ErrorActionPreference = $previousPreference
     }
 }
 
@@ -142,12 +168,44 @@ function Remove-StagingDirectory([string] $Directory)
 
 function New-ContainerImageArchive([string] $ImageTag, [string] $ArchivePath)
 {
-    # Das .NET SDK baut das Image selbst - ohne Dockerfile, ohne Docker und ohne Emulation.
-    dotnet publish $WebUIProject -c Release --os linux --arch arm64 /t:PublishContainer `
-        "-p:ContainerRepository=$ImageName" `
-        "-p:ContainerImageTag=$ImageTag" `
-        "-p:ContainerArchiveOutputPath=$ArchivePath"
+    $publishDirectory = Join-Path ([IO.Path]::GetTempPath()) 'gwios-webui-publish'
+    Remove-StagingDirectory $publishDirectory
+    try
+    {
+        Publish-WebUI $publishDirectory
+        Build-ContainerImage $ImageTag $publishDirectory
+        Save-ContainerImage $ImageTag $ArchivePath
+    }
+    finally
+    {
+        Remove-StagingDirectory $publishDirectory
+    }
+}
+
+function Publish-WebUI([string] $PublishDirectory)
+{
+    # Kompiliert wird hier, nicht im Container: so läuft nur die Paketinstallation im Dockerfile unter Emulation.
+    dotnet publish $WebUIProject -c Release --os linux --arch arm64 --self-contained false -o $PublishDirectory
     Assert-ExitCode 'dotnet publish'
+}
+
+function Build-ContainerImage([string] $ImageTag, [string] $PublishDirectory)
+{
+    # Der Rechner baut für den ARM-Prozessor des rpi5; Docker Desktop emuliert ihn dafür.
+    docker build --platform linux/arm64 --load `
+        --build-arg "POSTGRES_MAJOR_VERSION=$PostgresClientMajorVersion" `
+        --tag "${ImageName}:$ImageTag" `
+        --file $Dockerfile `
+        $PublishDirectory
+    Assert-ExitCode 'docker build'
+}
+
+function Save-ContainerImage([string] $ImageTag, [string] $ArchivePath)
+{
+    docker save --output $ArchivePath "${ImageName}:$ImageTag"
+    Assert-ExitCode 'docker save'
+    # Das Image wird nur auf dem rpi5 gebraucht; hier bliebe es bei jedem Deploy liegen.
+    Invoke-Quietly { docker image rm "${ImageName}:$ImageTag" }
 }
 
 function Invoke-OnServer([string] $Command)
