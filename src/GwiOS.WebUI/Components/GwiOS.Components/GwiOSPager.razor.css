@@ -89,7 +89,6 @@
     border-radius: var(--gwios-radius-small);
     background: transparent;
     color: var(--gwios-text-muted);
-    font-family: var(--gwios-font-display);
     font-size: 12.5px;
     font-weight: 600;
     cursor: pointer;

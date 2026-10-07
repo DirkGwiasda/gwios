@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Components;
 namespace GwiOS.WebUI.Components.GwiOS.Components;
 
 /// <summary>
-/// Line chart comparing one or more series (e.g. income against expenses) over the given labels (e.g. months).
+/// Line chart comparing one or more series (e.g. income against expenses) over the given labels (e.g. months). Its
+/// legend is a separate <see cref="GwiOSLineChartLegend"/>, so it can be placed e.g. in the header of a card.
 /// </summary>
 public partial class GwiOSLineChart
 {
@@ -29,7 +30,7 @@ public partial class GwiOSLineChart
         => Series.SelectMany(series => series.Values).DefaultIfEmpty(0).Max();
 
     private string MaxLabel
-        => MaxValue.ToString("C0", GermanCulture);
+        => Math.Round(MaxValue).ToString("C", GermanCulture);
 
     private string GetPoints(GwiOSLineSeries series)
     {

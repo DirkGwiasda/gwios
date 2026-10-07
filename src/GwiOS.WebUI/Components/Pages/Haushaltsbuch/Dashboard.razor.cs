@@ -15,7 +15,8 @@ namespace GwiOS.WebUI.Components.Pages.Haushaltsbuch;
 
 /// <summary>
 /// Dashboard tab of the Haushaltsbuch: the KPI figures and bookings of the selected month, where bookings are
-/// created, changed in a dialog and deleted, and where the review popup for due recurring items appears.
+/// created, changed in a dialog and deleted, and where due recurring items are picked in a dialog to become bookings —
+/// automatically on the first visit of an unreviewed month, or on demand through the "Fixbuchungen generieren" button.
 /// </summary>
 public partial class Dashboard
 {
@@ -31,7 +32,8 @@ public partial class Dashboard
     private List<Booking> _bookings = [];
     private List<ProposedBooking> _proposedBookings = [];
 
-    private bool _showReviewPopup;
+    private bool _isProposalDialogOpen;
+    private bool _isMonthReview;
     private readonly HashSet<ProposedBooking> _selectedProposals = [];
 
     private Booking? _editedBooking;
@@ -93,6 +95,14 @@ public partial class Dashboard
     private string DialogTitle
         => IsNewBooking ? "Neue Buchung" : "Buchung bearbeiten";
 
+    private string GenerateFixBookingsLabel
+        => _proposedBookings.Count == 0
+            ? "Fixbuchungen vollständig"
+            : $"Fixbuchungen für {MonthNames[_month.Month - 1]} generieren ({_proposedBookings.Count})";
+
+    private string ProposalDialogTitle
+        => _isMonthReview ? $"Fixposten für {MonthLabel} prüfen" : $"Fixbuchungen für {MonthLabel} generieren";
+
     protected override async Task OnInitializedAsync()
     {
         DateOnly today = DateOnly.FromDateTime(TimeProvider.GetLocalNow().DateTime);
@@ -109,20 +119,11 @@ public partial class Dashboard
     private decimal SumBookings(CategoryType type, BookingStatus status)
         => _bookings.Where(booking => (booking.Type == type) && (booking.Status == status)).Sum(booking => booking.Amount);
 
-    private string GetCategoryPath(Guid categoryId)
-    {
-        Dictionary<Guid, Category> categoriesById = _categories.ToDictionary(category => category.Id);
-        List<string> parts = [];
-        Guid? currentId = categoryId;
-        int guard = 0;
-        while ((currentId is Guid id) && categoriesById.TryGetValue(id, out Category? category) && (guard++ < 8))
-        {
-            parts.Insert(0, category.Name);
-            currentId = category.ParentId;
-        }
-
-        return parts.Count == 0 ? "—" : string.Join(" › ", parts);
-    }
+    // A booking generated from a recurring item without a description of its own is labeled as such.
+    private static string GetDescription(Booking booking)
+        => !string.IsNullOrWhiteSpace(booking.Description)
+            ? booking.Description
+            : booking.RecurringItemId is null ? "—" : "Fixbuchung";
 
     private static string GetAmountClass(CategoryType type)
         => type == CategoryType.Income ? "gwios-amount gwios-amount--success" : "gwios-amount gwios-amount--danger";
@@ -246,23 +247,38 @@ public partial class Dashboard
         }
     }
 
-    private async Task GenerateFixBookingsAsync()
+    private void OpenFixBookingSelection()
     {
         if (_proposedBookings.Count == 0)
         {
             return;
         }
 
-        await RecurringBookingGenerationWorkflow.ConfirmAsync(_month, _proposedBookings);
-        StatusMessages.Publish(StatusLevel.Success, $"{_proposedBookings.Count} Fixbuchungen für {MonthLabel} erzeugt");
-        await ReloadDataAsync();
+        OpenProposalDialog();
+        _isMonthReview = false;
     }
 
-    private async Task ConfirmReviewAsync()
+    private void OpenMonthReview()
+    {
+        OpenProposalDialog();
+        _isMonthReview = true;
+    }
+
+    private void OpenProposalDialog()
+    {
+        _selectedProposals.Clear();
+        _selectedProposals.UnionWith(_proposedBookings);
+        _isProposalDialogOpen = true;
+    }
+
+    private void CloseProposalDialog()
+        => _isProposalDialogOpen = false;
+
+    private async Task ConfirmProposalsAsync()
     {
         int confirmedCount = _selectedProposals.Count;
         await RecurringBookingGenerationWorkflow.ConfirmAsync(_month, [.. _selectedProposals]);
-        _showReviewPopup = false;
+        CloseProposalDialog();
         StatusMessages.Publish(StatusLevel.Success, $"{confirmedCount} Fixbuchungen für {MonthLabel} übernommen");
         await ReloadDataAsync();
     }
@@ -274,17 +290,11 @@ public partial class Dashboard
         bool needsReview = await RecurringBookingGenerationWorkflow.NeedsReviewAsync(_month);
         if (needsReview && (_proposedBookings.Count > 0))
         {
-            _selectedProposals.Clear();
-            foreach (ProposedBooking proposal in _proposedBookings)
-            {
-                _selectedProposals.Add(proposal);
-            }
-
-            _showReviewPopup = true;
+            OpenMonthReview();
         }
         else
         {
-            _showReviewPopup = false;
+            CloseProposalDialog();
             if (needsReview)
             {
                 // Nothing to propose this month; mark it reviewed without bothering anyone with an empty popup.

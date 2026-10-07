@@ -10,6 +10,7 @@
 #include "freertos/task.h"
 #include "ping_payload.h"
 #include "ping_url.h"
+#include "status_led.h"
 #include "wifi_connection.h"
 
 // The TLS handshake needs far more stack than an ordinary task.
@@ -139,6 +140,11 @@ static void send_ping(const ping_context_t *context)
 
     int status = 0;
     esp_err_t result = post(url, context->config->token, body, body_length, &status);
+
+    // The attempt itself counts as traffic, whatever came of it; only an answer GwiOS accepted proves that
+    // the two really talked to each other.
+    status_led_note_request(result == ESP_OK && status >= 200 && status < 300);
+
     if (result != ESP_OK)
     {
         ESP_LOGW(TAG, "Ping to %s failed: %s.", url, esp_err_to_name(result));

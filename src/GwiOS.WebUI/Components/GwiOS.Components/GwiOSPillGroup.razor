@@ -1,9 +1,9 @@
-<div class="gwios-pill-group" role="group" aria-label="@AriaLabel">
+<div class="gwios-pill-group @(Variant == GwiOSPillGroupVariant.Toggles ? "gwios-pill-group--toggles" : null)" role="group" aria-label="@AriaLabel">
     @foreach (string item in Items)
     {
         bool isSelected = item == SelectedItem;
         <button type="button"
-                class="gwios-pill @(isSelected ? "gwios-pill--selected" : null)"
+                class="@GetItemClass(isSelected)"
                 aria-pressed="@(isSelected ? "true" : "false")"
                 @onclick="() => SelectAsync(item)">
             @item
@@ -36,6 +36,21 @@
     /// </summary>
     [Parameter]
     public string AriaLabel { get; set; } = "Auswahl";
+
+    /// <summary>
+    /// Look of the items.
+    /// </summary>
+    [Parameter]
+    public GwiOSPillGroupVariant Variant { get; set; } = GwiOSPillGroupVariant.Pills;
+
+    private string GetItemClass(bool isSelected)
+        => (Variant, isSelected) switch
+        {
+            (GwiOSPillGroupVariant.Toggles, true) => "gwios-toggle-button gwios-toggle-button--selected",
+            (GwiOSPillGroupVariant.Toggles, false) => "gwios-toggle-button",
+            (_, true) => "gwios-pill gwios-pill--selected",
+            _ => "gwios-pill"
+        };
 
     private async Task SelectAsync(string item)
     {

@@ -4,7 +4,7 @@ Firmware für einen Satelliten aus ESP32 und BME280. Aktueller Stand: Der Satell
 Konfiguration, verbindet sich mit dem WLAN und misst alle fünf Sekunden Temperatur, Luftfeuchte und
 Luftdruck. Die letzte Messung liefert er per HTTP an GwiOS aus und gibt sie auf der seriellen Konsole aus.
 Alle 60 Sekunden meldet er sich per HTTPS bei GwiOS (Ping) mit Adresse, Board, Firmware-Version,
-WLAN-Signalstärke und Sensoren.
+WLAN-Signalstärke und Sensoren. Drei LEDs zeigen ohne Konsole, ob er läuft und ob er GwiOS erreicht.
 
 ## Hardware
 
@@ -17,8 +17,34 @@ WLAN-Signalstärke und Sensoren.
 | grün | `CS` | offen |
 | orange | `MISO/ADDR` | offen |
 
+Dazu die drei Status-LEDs, jede mit eigenem Vorwiderstand (220–330 Ω) an `GND`:
+
+| LED | ESP32 DevKit C |
+|---|---|
+| blau | `GPIO 25` |
+| grün | `GPIO 26` |
+| rot | `GPIO 27` |
+
+Die langen Beine (Anode) gehen an die GPIOs, die kurzen über den Widerstand an `GND`.
+
 Board: ESP32-WROOM-32 (DevKit C, CP2102). Sensor: seengreat BME280, I²C-Adresse `0x77`.
 Die Pin-Belegung steht in `main/main.c` ganz oben; Begründungen in `docs/devplan.md`.
+
+## Statusanzeige
+
+| LED | Bedeutung |
+|---|---|
+| blau | leuchtet dauerhaft, solange die Firmware läuft |
+| grün | leuchtet, solange in den letzten 3 Minuten eine erfolgreiche Kommunikation mit GwiOS stattfand |
+| rot | leuchtet dauerhaft, solange das nicht der Fall ist; sonst 500 ms je ein- oder ausgehendem Request |
+
+Als erfolgreich zählt ein Ping, den GwiOS annimmt (`204`), und ein Abruf der Messwerte mit gültigem Token.
+Ein abgewiesener Ping oder ein Abruf ohne Token ist Verkehr, aber kein Erfolg: Rot blinkt, Grün bleibt
+unberührt. Die 3 Minuten sind dieselbe Frist, nach der GwiOS einen Satelliten für offline hält.
+
+Im Normalbetrieb leuchtet also blau und grün, und rot blitzt alle 30 Sekunden (Abruf durch GwiOS) und alle
+60 Sekunden (Ping) kurz auf. Nur blau und rot heißt: keine Konfiguration, kein WLAN oder GwiOS nicht
+erreichbar — der Satellit misst dann weiter, nur meldet er nichts.
 
 ## Ablauf im Überblick
 
@@ -115,7 +141,8 @@ Antworten: `200` mit JSON, `401` ohne oder mit falschem Token, `503` vor der ers
 ## Tests
 
 Die reine Logik (BME280-Kompensation, Regeln der Konfiguration, Pausen bei der WLAN-Neuverbindung,
-Token-Prüfung, JSON der Messwerte, URL und Inhalt des Pings) wird mit Host-Tests geprüft. Sie liegen unter
+Token-Prüfung, JSON der Messwerte, URL und Inhalt des Pings, Zustand der Status-LEDs) wird mit Host-Tests
+geprüft. Sie liegen unter
 `tests/GwiOS.Satellite.Bme280.Tests`, verwenden Unity aus ESP-IDF und laufen ohne Board. Ausführen in
 einem **normalen** Terminal der VM, nicht im ESP-IDF-Terminal, im Wurzelverzeichnis des Repos:
 

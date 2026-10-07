@@ -1,3 +1,7 @@
+.gwios-satellite-tile .gwios-badge {
+    font-weight: 600;
+}
+
 .gwios-satellite-tile {
     display: flex;
     flex-direction: column;

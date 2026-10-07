@@ -25,7 +25,6 @@
 
 .gwios-satellite-candidate-name {
     color: var(--gwios-text);
-    font-family: var(--gwios-font-mono);
     font-size: 14px;
     font-weight: 600;
     overflow-wrap: anywhere;

@@ -33,7 +33,6 @@
         radial-gradient(120% 120% at 70% 70%, rgba(0, 136, 255, 0.6) 0%, transparent 35%);
     box-shadow: 0 0 10px rgba(0, 136, 255, 0.4);
     color: var(--gwios-text);
-    font-family: var(--gwios-font-display);
     font-size: 13px;
     font-weight: 700;
 }
@@ -72,4 +71,8 @@
 
 .gwios-person-tile .gwios-badge {
     align-self: flex-start;
+}
+
+.gwios-person-actions ::deep .gwios-icon-button:not(.gwios-icon-button--primary) {
+    font-weight: 600;
 }

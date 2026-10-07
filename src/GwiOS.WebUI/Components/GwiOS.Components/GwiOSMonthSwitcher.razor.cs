@@ -31,6 +31,18 @@ public partial class GwiOSMonthSwitcher
     private string Label
         => $"{MonthNames[Month.Month - 1]} {Month.Year}";
 
+    private DateOnly CurrentMonth
+    {
+        get
+        {
+            DateOnly today = DateOnly.FromDateTime(TimeProvider.GetLocalNow().DateTime);
+            return new DateOnly(today.Year, today.Month, 1);
+        }
+    }
+
+    private bool IsCurrentMonth
+        => (Month.Year == CurrentMonth.Year) && (Month.Month == CurrentMonth.Month);
+
     private async Task GoToPreviousMonthAsync()
         => await ChangeMonthAsync(Month.AddMonths(-1));
 
@@ -38,10 +50,7 @@ public partial class GwiOSMonthSwitcher
         => await ChangeMonthAsync(Month.AddMonths(1));
 
     private async Task GoToCurrentMonthAsync()
-    {
-        DateOnly today = DateOnly.FromDateTime(TimeProvider.GetLocalNow().DateTime);
-        await ChangeMonthAsync(new DateOnly(today.Year, today.Month, 1));
-    }
+        => await ChangeMonthAsync(CurrentMonth);
 
     private async Task ChangeMonthAsync(DateOnly month)
         => await MonthChanged.InvokeAsync(new DateOnly(month.Year, month.Month, 1));

@@ -1,8 +1,11 @@
-<div class="gwios-panel gwios-month-switcher">
-    <button type="button" class="gwios-icon-button" aria-label="Voriger Monat" @onclick="GoToPreviousMonthAsync">‹</button>
+<div class="gwios-month-switcher">
+    <button type="button" class="gwios-month-switcher-step" aria-label="Voriger Monat" @onclick="GoToPreviousMonthAsync">‹</button>
     <span class="gwios-month-switcher-label">@Label</span>
-    <button type="button" class="gwios-icon-button" aria-label="Nächster Monat" @onclick="GoToNextMonthAsync">›</button>
-    <button type="button" class="gwios-button gwios-button--secondary gwios-button--compact" @onclick="GoToCurrentMonthAsync">
+    <button type="button" class="gwios-month-switcher-step" aria-label="Nächster Monat" @onclick="GoToNextMonthAsync">›</button>
+    <button type="button"
+            class="gwios-toggle-button @(IsCurrentMonth ? "gwios-toggle-button--selected" : null)"
+            aria-pressed="@(IsCurrentMonth ? "true" : "false")"
+            @onclick="GoToCurrentMonthAsync">
         Heute
     </button>
 </div>

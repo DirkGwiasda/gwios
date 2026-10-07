@@ -38,7 +38,6 @@
 }
 
 .gwios-donut-chart-center-value {
-    font-family: var(--gwios-font-display);
     font-size: 14px;
     font-weight: 600;
     color: var(--gwios-text);

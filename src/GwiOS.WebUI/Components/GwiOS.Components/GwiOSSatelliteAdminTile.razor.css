@@ -35,7 +35,6 @@
 
 .gwios-satellite-admin-name {
     color: var(--gwios-text);
-    font-family: var(--gwios-font-mono);
     font-size: 14px;
     font-weight: 600;
     overflow-wrap: anywhere;
@@ -87,4 +86,13 @@
 
 .gwios-satellite-admin-delete {
     margin-left: auto;
+}
+
+/* Löschen tritt hinter die übrigen Aktionen zurück, bis es zur Bestätigung rot wird. */
+.gwios-satellite-admin-delete ::deep .gwios-button.gwios-button--secondary {
+    color: var(--gwios-text-dim);
+}
+
+.gwios-satellite-admin-badges .gwios-badge {
+    font-weight: 600;
 }

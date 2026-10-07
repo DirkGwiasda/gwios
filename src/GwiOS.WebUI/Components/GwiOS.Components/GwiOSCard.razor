@@ -1,0 +1,71 @@
+<section class="gwios-card gwios-card--@Variant.ToString().ToLowerInvariant()">
+    <header class="gwios-card-header">
+        <h2 class="gwios-card-title gwios-card-title--@Accent.ToString().ToLowerInvariant()">@Title</h2>
+        @if (Hint is not null)
+        {
+            <span class="gwios-card-hint">@Hint</span>
+        }
+        @if (HeaderContent is not null)
+        {
+            <div class="gwios-card-header-content">@HeaderContent</div>
+        }
+    </header>
+    @if (IsEmpty)
+    {
+        <p class="gwios-empty">@EmptyText</p>
+    }
+    else
+    {
+        @ChildContent
+    }
+</section>
+
+@code {
+    /// <summary>
+    /// Title shown in the header of the card.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Short, muted text next to the title, e.g. an explanation or a sum, or <c>null</c> for none.
+    /// </summary>
+    [Parameter]
+    public string? Hint { get; set; }
+
+    /// <summary>
+    /// Color of the title.
+    /// </summary>
+    [Parameter]
+    public GwiOSCardAccent Accent { get; set; } = GwiOSCardAccent.Primary;
+
+    /// <summary>
+    /// Layout of header and content.
+    /// </summary>
+    [Parameter]
+    public GwiOSCardVariant Variant { get; set; } = GwiOSCardVariant.Padded;
+
+    /// <summary>
+    /// Content at the right end of the header, e.g. a button or a legend, or <c>null</c> for none.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? HeaderContent { get; set; }
+
+    /// <summary>
+    /// Whether the card has no content; then <see cref="EmptyText"/> is shown instead of the content.
+    /// </summary>
+    [Parameter]
+    public bool IsEmpty { get; set; }
+
+    /// <summary>
+    /// Text shown instead of the content while <see cref="IsEmpty"/> is set.
+    /// </summary>
+    [Parameter]
+    public string EmptyText { get; set; } = "Keine Einträge vorhanden.";
+
+    /// <summary>
+    /// The content of the card.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

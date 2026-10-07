@@ -6,6 +6,7 @@
 #include "measurement_store.h"
 #include "measurements_json.h"
 #include "satellite_config_rules.h"
+#include "status_led.h"
 
 #define AUTHORIZATION_HEADER "Authorization"
 
@@ -75,7 +76,13 @@ static esp_err_t send_measurements(httpd_req_t *request)
 
 static esp_err_t handle_get_measurements(httpd_req_t *request)
 {
-    if (!is_authorized(request))
+    const bool authorized = is_authorized(request);
+
+    // A request with a valid token comes from GwiOS, so it proves the connection works — even when there is
+    // no measurement to hand out yet. One without stays mere traffic: anyone in the network can knock.
+    status_led_note_request(authorized);
+
+    if (!authorized)
     {
         return reject_unauthorized(request);
     }

@@ -4,6 +4,10 @@
     gap: 6px;
 }
 
+.gwios-pill-group.gwios-pill-group--toggles {
+    gap: 8px;
+}
+
 .gwios-pill {
     padding: 6px 14px;
     border: 1px solid var(--gwios-border);
@@ -24,16 +28,4 @@
     border-color: var(--gwios-border-strong);
     background: var(--gwios-surface-selected);
     color: var(--gwios-primary);
-}
-
-@media (max-width: 820px) {
-    .gwios-pill-group {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .gwios-pill {
-        flex-shrink: 0;
-    }
 }

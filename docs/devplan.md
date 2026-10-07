@@ -131,6 +131,28 @@ nichts umgesetzt.
       hartkodierten Werte außer der siebenteiligen Kategorie-Farbpalette.
       `dotnet build src/GwiOS.WebUI` fehlerfrei; die WebUI wurde in dieser Sitzung erstmals lokal gegen eine echte
       Postgres-Datenbank gestartet (siehe unten) und legt beim Start alle vier neuen Tabellen korrekt an.
+- [x] Button „Fixbuchungen generieren“ übernimmt nicht mehr blind alle fälligen Fixposten, sondern öffnet denselben
+      Auswahldialog wie die Monatsprüfung (alle vorausgewählt, einzeln abwählbar); anders als dort lässt er sich
+      abbrechen, ohne etwas zu buchen (Vorgabe von Dirk, 19.09.2026). Zwei neue E2E-Tests in
+      `DashboardPageTests`; `dotnet build` fehlerfrei, `GwiOS.WebUI.Tests` grün (366). **Die E2E-Tests sind noch
+      nicht gelaufen** — in dieser Sitzung lag kein `GwiOS.DB.TestConnectionstring` vor.
+- [x] Überarbeitung nach Abgleich mit der Vorlage (07.10.2026, Anlass: Kategorien-Ansicht nicht responsive, Boxen
+      nicht in voller Breite, Schriftgrößen/Farben abweichend). Alle vier Tabs Text für Text gegen die gerenderte
+      Vorlage geprüft (Schriftart, -größe, -stärke, Farbe) und bei 1280/900/390 px verglichen. Wesentliche Fehler:
+      Kategorien-Raster `auto-fill` (dritte leere Spalte), `GwiOSSection` statt Kartenkopf mit Leiste, Ausgaben blau
+      statt rot, keine Abstände zwischen den Blöcken (`.gwios-page` ohne `gap`), Monatsumschalter als Panel im Panel,
+      Bearbeiten-Knöpfe leuchteten rot statt blau, Aktionen brachen um, Tabellenköpfe 13,5 statt 12,5 px. Außerdem
+      zählte die Typsumme im Kategorien-Kopf Unterkategorien doppelt (Summe einer Kategorie enthält schon ihre
+      Unterkategorien) — behoben. Neu: `GwiOSCard` (+ `GwiOSCardAccent`/`GwiOSCardVariant`), `GwiOSCategoryLabel`
+      (Farbpunkt + Pfad, ersetzt die doppelte Pfadlogik in Dashboard/Fixkosten), `GwiOSLineChartLegend`; Varianten
+      `GwiOSTabNavVariant.Pills` und `GwiOSPillGroupVariant.Toggles`; zentrale Klassen `gwios-toggle-button`,
+      `gwios-toolbar-panel`, `gwios-stack--compact`, `gwios-table--compact`, `gwios-table-end`. bUnit-Tests für alle
+      geänderten/neuen Komponenten, `GwiOS.WebUI.Tests` grün (413). **E2E-Tests nicht gelaufen** (kein
+      `GwiOS.DB.TestConnectionstring`); der Regex für den Button „Fixbuchungen für … generieren“ wurde angepasst.
+- [x] Fixkosten-Tabelle verschlankt (Vorgabe von Dirk, 07.10.2026): Spalten „Fälligkeit“, „pro Monat“ und
+      „Status“ entfernt, Betrag in derselben Schriftgröße (13,5 px) wie die übrigen Spalten. Inaktive Posten stehen
+      weiterhin in der Liste (sonst ließen sie sich nicht wieder aktivieren); ihren Zustand zeigt nur noch der Knopf
+      „Aktivieren“/„Deaktivieren“. Fälligkeit und Startmonat bleiben im Bearbeiten-Dialog sichtbar.
 - [x] Statt bUnit-Tests je Seite: echtes End-to-End-Testprojekt `tests/GwiOS.WebUI.E2E.Tests` mit Playwright
       gegen die real laufende WebUI (auf Wunsch von Dirk, 18.09.2026, als stärkerer Nachweis als Komponententests
       mit gerendertem Markup). Details siehe eigener Abschnitt unten.
@@ -173,6 +195,16 @@ nichts umgesetzt.
   Tag) angefragt. Das hält die Architekturregel „Host ruft bei mehreren Managern einen Workflow, nie mehrere
   Manager direkt“ konsequent ein, statt für jede Seite eine eigene Ausnahme zu machen.
 
+- Maßstab für die Optik ist die **gerenderte** Vorlage, nicht ihr Quelltext: Das Design-Tool verwirft
+  `font-family:'Orbitron'` in per Skript gesetzten Styles, die Vorlage zeigt dort Inter. Deshalb stehen
+  KPI-Werte, Monatsname, Fixkosten-Summe, Donut-Mitte und die Titel der Kategorienbäume in Inter (Vorschlag von
+  Claude, so umgesetzt, 07.10.2026 — noch nicht von Dirk gegengeprüft).
+- Bewusste Abweichungen von der Vorlage, weil sie dort selbst fehlerhaft ist (07.10.2026, noch nicht von Dirk
+  gegengeprüft): Berichte — die zwei oberen Karten teilen sich die volle Breite (in der Vorlage erzwingt der
+  Monatsverlauf über die ganze Zeile eine dritte, leere Spalte); Tabellen scrollen waagerecht, statt rechts
+  abgeschnitten zu werden (Vorlage bei ca. 820–1000 px); der Monatsumschalter bleibt mobil eine Zeile (Vorlage stapelt
+  ‹, Monat und › untereinander); Spaltenbeschriftungen der mobilen Tabellenkarten immer normal statt teils fett.
+
 ### Testinfrastruktur: lokale Postgres-DB und Playwright-E2E-Tests
 
 Auf Wunsch von Dirk (18.09.2026) in dieser Sitzung aufgesetzt, damit die Haushaltsbuch-Umsetzung nicht nur gegen
@@ -211,13 +243,30 @@ Fakes, sondern gegen eine echte Datenbank und eine echte laufende WebUI geprüft
 
 - Die neuen wiederverwendbaren Komponenten `GwiOSMonthSwitcher`, `GwiOSKpiTile`, `GwiOSCategoryTree`,
   `GwiOSDonutChart`, `GwiOSLineChart` sind vorgeschlagen, aber noch nicht im Detail mit Dirk abgestimmt.
+- Fixposten sollen laut Dirk (07.10.2026) eigentlich nicht automatisch in die Buchungen einfließen, sondern nur als
+  Übersicht neben dem manuellen Buchen dienen. Vorerst bleibt alles wie es ist (Monatsstart-Popup und Button
+  „Fixbuchungen für … generieren“). Offen: Popup entfernen? Button behalten? Monatsprüfung (`month_reviews`) und
+  ggf. `RecurringBookingGenerationWorkflow` dann aus dem Core entfernen?
+- Seitentitel: Die Vorlage sagt „Haushaltsbuch HaBu“, umgesetzt ist „Haushaltsbuch“ (E2E-Tests prüfen darauf).
+  Welcher soll gelten?
+- Die Satellitenkacheln zeigen Name, Temperatur, Feuchte und Luftdruck in Orbitron, die gerenderte Vorlage dort
+  Inter (siehe Entscheidung zur gerenderten Vorlage oben). Bewusst nicht umgestellt, weil die Kacheln mit Dirk
+  abgestimmt wurden (Trendpfeil eigens wegen Orbitron). Soll es bei Orbitron bleiben?
 
 ## WebUI (Design-Vorlage `docs/UI/GwiOS.WebUI.Design.html`)
 
 Fertig: Theme/Layout, GwiOS-Komponenten (`Components/GwiOS.Components`), Seiten `/todos`, `/admin/logging`,
 `/admin/benutzer`, Statusleiste mit Verlauf, Testprojekt `tests/GwiOS.WebUI.Tests` (xunit v3 + bUnit 2).
 
-- [ ] Haushaltsbuch aus der Vorlage — Planung siehe Abschnitt „Haushaltsbuch“ oben, Umsetzung offen
+- [x] Haushaltsbuch aus der Vorlage — umgesetzt und am 07.10.2026 gegen die Vorlage nachgearbeitet, siehe Abschnitt
+      „Haushaltsbuch“ oben
+- [x] ToDos, Satelliten und Admin gegen die gerenderte Vorlage geprüft (07.10.2026, gleiches Verfahren wie beim
+      Haushaltsbuch). Aufbau und Raster stimmten; korrigiert: Tabellenzellen mittig statt oben (alle Tabellen),
+      Log-Level-Plaketten, Pager-Seitenzahlen und Personen-Kürzel in Inter statt Orbitron, Status-Plaketten der
+      Satellitenkacheln fett, Satellitennamen in Admin- und Kandidatenkachel in Inter statt Monospace, „Löschen“ in
+      der Satellitenverwaltung gedämpft, Löschen-Knopf der Personenkachel fett, Statusleiste der Satelliten-Seite
+      mobil untereinander mit voller Breite. Kachel-Raster mit `auto-fill` sind dort wie in der Vorlage gewollt
+      (Kacheln behalten ihre Größe).
 
 ### Entscheidungen (gelten als Konvention für künftige UI-Arbeit)
 
@@ -280,7 +329,7 @@ Kleine Hardwaremodule, die Messwerte über das LAN an GwiOS schicken. Erstes Mod
 (Temperatur, Luftfeuchte, Luftdruck).
 
 Fertig: Firmware (I²C-Treiber, Konfiguration über NVS-Partition `config`, WLAN mit Neuverbindung,
-Messwert-Server, Ping-Client), Architektur in `docs/architecture.md` bestätigt, GwiOS Core (Manager, Workflows)
+Messwert-Server, Ping-Client, Status-LEDs), Architektur in `docs/architecture.md` bestätigt, GwiOS Core (Manager, Workflows)
 und WebUI (Ping-API, Hintergrunddienst, Seiten „Satelliten“/„Satellitenverwaltung“) fertig und auf dem Pi
 deployt; erster echter Satellit über die UI angelegt.
 
@@ -290,6 +339,8 @@ deployt; erster echter Satellit über die UI angelegt.
       geschrieben)
 - [ ] Test am Board abschließen: Ping wird angenommen (`204`), Messwerte erscheinen in der Kachel, Offline
       nach 3 min ohne Strom
+- [ ] Status-LEDs am Board prüfen: blau ab dem Einschalten, grün nach dem ersten angenommenen Ping, rotes
+      Blitzen bei Ping und Abruf, dauerhaft rot nach 3 min ohne GwiOS (WLAN abschalten)
 
 ### Entscheidungen — Protokoll und Sicherheit
 
@@ -370,6 +421,19 @@ deployt; erster echter Satellit über die UI angelegt.
 - Nach Verbindungsverlust: Neuversuch nach 1 s, Pause verdoppelt sich bis max. 60 s, fällt nach Erfolg auf
   1 s zurück. Mindestens WPA2 verlangt. Energiesparmodus aus (`WIFI_PS_NONE`), sonst verzögerte Anfragen von
   GwiOS.
+- Status-LEDs (blau GPIO 25, grün GPIO 26, rot GPIO 27, je Vorwiderstand gegen GND): blau zeigt den Betrieb,
+  grün eine erfolgreiche Kommunikation mit GwiOS in den letzten 3 Minuten, rot deren Fehlen — und solange
+  grün leuchtet, stattdessen 500 ms je ein- oder ausgehendem Request. Rot trägt beides, weil zwei getrennte
+  Lampen für Störung und Verkehr eine vierte LED gekostet hätten; die Störung hat Vorrang, sonst würde ein
+  offline blinkender Satellit wie ein gesunder wirken. Die 3 Minuten sind dieselbe Frist, nach der GwiOS
+  einen Satelliten für offline hält. Als Erfolg zählen ein angenommener Ping (2xx) und ein Abruf mit
+  gültigem Token; abgewiesene Anfragen sind nur Verkehr.
+- GPIO 25–27 für die LEDs, weil sie auf dem DevKit C frei sind: keine Strapping-Pins, keine Flash-Leitungen,
+  beim Booten still. Die Belegung steht wie die des Sensors oben in `main/main.c`, die Lampen werden vor
+  allem anderen gestartet (blau brennt ab dem Einschalten).
+- Die Zustandslogik der LEDs liegt ESP-IDF-frei in `status_led_policy.c` (Host-Tests), die Ansteuerung in
+  `status_led.c` (GPIOs, Mutex, Auffrischen alle 50 ms). Ping-Client und Messwert-Server melden jeden
+  Request mit `status_led_note_request(erfolgreich)`.
 - Landmine (Board/Flash): Der automatische Wechsel in den Download-Modus funktioniert auf diesem Board nicht
   (`idf.py flash` → `Wrong boot mode detected`) — vor dem Flashen BOOT halten, EN kurz drücken, BOOT
   loslassen, dann mit `--before no-reset` flashen.

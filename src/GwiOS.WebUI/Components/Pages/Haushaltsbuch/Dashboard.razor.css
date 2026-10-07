@@ -1,8 +1,5 @@
 .gwios-dashboard-toolbar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+    box-shadow: var(--gwios-glow);
 }
 
 .gwios-dashboard-toolbar-actions {
@@ -12,8 +9,36 @@
     flex-wrap: wrap;
 }
 
+.gwios-dashboard-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 14px;
+}
+
+.gwios-dashboard-date {
+    color: var(--gwios-text-muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.gwios-dashboard-description {
+    color: var(--gwios-text-muted);
+    font-size: 13.5px;
+}
+
 .gwios-dialog-intro {
     margin: 0 0 4px;
     color: var(--gwios-text-muted);
     font-size: 13.5px;
+}
+
+@media (max-width: 820px) {
+    .gwios-dashboard-toolbar-actions {
+        flex-direction: column;
+        margin-left: 0;
+    }
+
+    .gwios-dashboard-toolbar-actions .gwios-button {
+        width: 100%;
+    }
 }

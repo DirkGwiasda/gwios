@@ -218,31 +218,6 @@ public partial class Fixkosten
             _ => interval.ToString()
         };
 
-    private static string GetDueLabel(RecurringItem item)
-        => item.Interval switch
-        {
-            RecurringInterval.Weekly => "Wöchentlich, 4× im Monat",
-            RecurringInterval.Monthly => $"Jeweils zum {item.DueDay}.",
-            RecurringInterval.Quarterly => $"Quartalsweise zum {item.DueDay}.",
-            RecurringInterval.Yearly => $"Jährlich im {MonthNames[item.StartMonth]}, zum {item.DueDay}.",
-            _ => string.Empty
-        };
-
-    private string GetCategoryPath(Guid categoryId)
-    {
-        Dictionary<Guid, Category> categoriesById = _categories.ToDictionary(category => category.Id);
-        List<string> parts = [];
-        Guid? currentId = categoryId;
-        int guard = 0;
-        while ((currentId is Guid id) && categoriesById.TryGetValue(id, out Category? category) && (guard++ < 8))
-        {
-            parts.Insert(0, category.Name);
-            currentId = category.ParentId;
-        }
-
-        return parts.Count == 0 ? "—" : string.Join(" › ", parts);
-    }
-
     private static string GetAmountClass(CategoryType type)
         => type == CategoryType.Income ? "gwios-amount gwios-amount--success" : "gwios-amount gwios-amount--danger";
 

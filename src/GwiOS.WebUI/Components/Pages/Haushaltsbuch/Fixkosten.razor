@@ -5,70 +5,71 @@
 <div class="gwios-page">
     <h1>Haushaltsbuch</h1>
 
-    <div class="gwios-toolbar">
-        <GwiOSPillGroup Items="TabItems" SelectedItem="@SelectedTabItem" SelectedItemChanged="SelectTab" AriaLabel="Art" />
-        <button type="button" class="gwios-button" @onclick="() => OpenNewItem()">+ Neuer wiederkehrender Posten</button>
-    </div>
+    <div class="gwios-stack gwios-stack--compact">
+        <div class="gwios-fixkosten-actions">
+            <GwiOSPillGroup Items="TabItems" SelectedItem="@SelectedTabItem" SelectedItemChanged="SelectTab" AriaLabel="Art" />
+            <button type="button" class="gwios-button" @onclick="() => OpenNewItem()">+ Neuer wiederkehrender Posten</button>
+        </div>
 
-    <div class="gwios-panel gwios-fixkosten-sum-panel">
-        <span class="gwios-fixkosten-sum-label">Monatliches Äquivalent (aktiv)</span>
-        <span class="gwios-fixkosten-sum-value">@FormatAmount(ActiveMonthlyEquivalentSum)</span>
-        <span class="gwios-fixkosten-sum-hint">Quartals- und Jahresposten sind auf den Monat geglättet.</span>
-    </div>
+        <div class="gwios-toolbar-panel gwios-fixkosten-sum-panel">
+            <span class="gwios-fixkosten-sum-label">Monatliches Äquivalent (aktiv)</span>
+            <span class="gwios-fixkosten-sum-value @GetAmountClass(_selectedType)">@FormatAmount(ActiveMonthlyEquivalentSum)</span>
+            <span class="gwios-fixkosten-sum-hint">Quartals- und Jahresposten sind auf den Monat geglättet.</span>
+        </div>
 
-    <div class="gwios-table-panel">
-        <table class="gwios-table">
-            <thead>
-                <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Kategorie</th>
-                    <th scope="col">Betrag</th>
-                    <th scope="col">Turnus</th>
-                    <th scope="col">Fälligkeit</th>
-                    <th scope="col">pro Monat</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Aktionen</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (RecurringItem item in FilteredItems)
-                {
-                    <tr @key="item.Id">
-                        <td data-label="Name">@item.Name</td>
-                        <td data-label="Kategorie">@GetCategoryPath(item.CategoryId)</td>
-                        <td data-label="Betrag" class="@GetAmountClass(item.Type)">@FormatAmount(item.Amount)</td>
-                        <td data-label="Turnus">@GetIntervalLabel(item.Interval)</td>
-                        <td data-label="Fälligkeit">@GetDueLabel(item)</td>
-                        <td data-label="pro Monat" class="gwios-table-secondary">@FormatAmount(GetMonthlyEquivalent(item))</td>
-                        <td data-label="Status">
-                            <span class="gwios-badge @(item.Active ? "gwios-badge--success" : "gwios-badge--muted")">
-                                @(item.Active ? "Aktiv" : "Inaktiv")
-                            </span>
-                        </td>
-                        <td data-label="Aktionen" class="gwios-table-actions">
-                            <button type="button" class="gwios-icon-button" title="Bearbeiten" @onclick="() => OpenEditItem(item)">
-                                ✎
-                            </button>
-                            <button type="button"
-                                    class="gwios-button gwios-button--compact gwios-button--secondary"
-                                    @onclick="() => ToggleActiveAsync(item)">
-                                @(item.Active ? "Deaktivieren" : "Aktivieren")
-                            </button>
-                            <GwiOSConfirmButton Title="Löschen"
-                                                CssClass="gwios-icon-button"
-                                                ConfirmCssClass="gwios-icon-button gwios-icon-button--danger"
-                                                OnConfirmed="() => DeleteItemAsync(item)">
-                                ✕
-                            </GwiOSConfirmButton>
-                        </td>
+        <div class="gwios-table-panel">
+            <table class="gwios-table gwios-table--compact">
+                <thead>
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Kategorie</th>
+                        <th scope="col" class="gwios-table-end">Betrag</th>
+                        <th scope="col">Turnus</th>
+                        <th scope="col" class="gwios-table-end">Aktionen</th>
                     </tr>
-                }
-            </tbody>
-        </table>
-        @if (FilteredItems.Count == 0)
-        {
-            <p class="gwios-empty">Keine wiederkehrenden Posten in dieser Liste.</p>
-        }
+                </thead>
+                <tbody>
+                    @foreach (RecurringItem item in FilteredItems)
+                    {
+                        <tr @key="item.Id">
+                            <td data-label="Name" class="gwios-fixkosten-name">@item.Name</td>
+                            <td data-label="Kategorie" class="gwios-fixkosten-muted">
+                                <GwiOSCategoryLabel Categories="_categories" CategoryId="item.CategoryId" />
+                            </td>
+                            <td data-label="Betrag" class="gwios-table-end gwios-fixkosten-amount @GetAmountClass(item.Type)">@FormatAmount(item.Amount)</td>
+                            <td data-label="Turnus" class="gwios-fixkosten-muted gwios-fixkosten-interval">@GetIntervalLabel(item.Interval)</td>
+                            <td data-label="Aktionen" class="gwios-table-end">
+                                <div class="gwios-table-actions">
+                                    <button type="button"
+                                            class="gwios-icon-button gwios-icon-button--primary"
+                                            title="Bearbeiten"
+                                            @onclick="() => OpenEditItem(item)">
+                                        ✎
+                                    </button>
+                                    <button type="button"
+                                            class="gwios-button gwios-fixkosten-toggle @(item.Active ? "gwios-button--warning" : "gwios-button--success")"
+                                            @onclick="() => ToggleActiveAsync(item)">
+                                        @(item.Active ? "Deaktivieren" : "Aktivieren")
+                                    </button>
+                                    <GwiOSConfirmButton Title="Löschen"
+                                                        ConfirmText="Sicher?"
+                                                        ConfirmTitle="Zum Bestätigen erneut klicken"
+                                                        CssClass="gwios-icon-button"
+                                                        ConfirmCssClass="gwios-icon-button gwios-icon-button--danger"
+                                                        OnConfirmed="() => DeleteItemAsync(item)">
+                                        ✕
+                                    </GwiOSConfirmButton>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            @if (FilteredItems.Count == 0)
+            {
+                <p class="gwios-empty">Keine wiederkehrenden Posten in dieser Liste.</p>
+            }
+        </div>
     </div>
 </div>
 
@@ -81,7 +82,8 @@
                 <GwiOSPillGroup Items="@(["Fixeinnahme", "Fixkosten"])"
                                 SelectedItem="@(_editType == CategoryType.Income ? "Fixeinnahme" : "Fixkosten")"
                                 SelectedItemChanged="SelectEditType"
-                                AriaLabel="Typ" />
+                                AriaLabel="Typ"
+                                Variant="GwiOSPillGroupVariant.Toggles" />
             </div>
             <GwiOSFormField Label="Bezeichnung" InputId="fix-edit-name" IsRequired="true" ErrorMessage="@_nameError">
                 <GwiOSTextBox id="fix-edit-name"
@@ -134,7 +136,8 @@
                 <GwiOSPillGroup Items="@(["Aktiv", "Inaktiv"])"
                                 SelectedItem="@(_editActive ? "Aktiv" : "Inaktiv")"
                                 SelectedItemChanged="SelectEditActive"
-                                AriaLabel="Status" />
+                                AriaLabel="Status"
+                                Variant="GwiOSPillGroupVariant.Toggles" />
             </div>
         </ChildContent>
         <Actions>

@@ -1,6 +1,6 @@
 key,type,encoding,value
 satellite,namespace,,
-name,data,string,wohnzimmer
+name,data,string,arbeitszimmer
 token,data,string,
 wifi_ssid,data,string,Mein WLAN
 wifi_password,data,string,geheimes-wlan-passwort

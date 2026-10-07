@@ -1,11 +1,11 @@
-<div class="gwios-panel gwios-kpi-tile gwios-kpi-tile--@AccentClass">
+<div class="gwios-kpi-tile gwios-kpi-tile--@ToClassSuffix(Accent)">
     <span class="gwios-kpi-tile-label">@Label</span>
-    <span class="gwios-kpi-tile-value">@Value</span>
+    <span class="gwios-kpi-tile-value gwios-kpi-text--@ToClassSuffix(ValueAccent ?? Accent)">@Value</span>
     @if ((FooterLeft is not null) || (FooterRight is not null))
     {
         <div class="gwios-kpi-tile-footer">
             <span>@FooterLeft</span>
-            <span class="@FooterRightClass">@FooterRight</span>
+            <span class="gwios-kpi-text--@ToClassSuffix(FooterRightAccent)">@FooterRight</span>
         </div>
     }
 </div>
@@ -24,10 +24,16 @@
     public string Value { get; set; } = string.Empty;
 
     /// <summary>
-    /// Color of the left border and the value.
+    /// Color of the left border, and of the value unless <see cref="ValueAccent"/> is set.
     /// </summary>
     [Parameter]
     public GwiOSKpiAccent Accent { get; set; } = GwiOSKpiAccent.Primary;
+
+    /// <summary>
+    /// Color of the value if it differs from <see cref="Accent"/>, or <c>null</c> to use <see cref="Accent"/>.
+    /// </summary>
+    [Parameter]
+    public GwiOSKpiAccent? ValueAccent { get; set; }
 
     /// <summary>
     /// Text at the left of the footer row below the value, or <c>null</c> for no footer.
@@ -42,14 +48,11 @@
     public string? FooterRight { get; set; }
 
     /// <summary>
-    /// Whether <see cref="FooterRight"/> is shown as a warning instead of the muted default color.
+    /// Color of <see cref="FooterRight"/>.
     /// </summary>
     [Parameter]
-    public bool IsFooterRightWarning { get; set; }
+    public GwiOSKpiAccent FooterRightAccent { get; set; } = GwiOSKpiAccent.Muted;
 
-    private string AccentClass
-        => Accent.ToString().ToLowerInvariant();
-
-    private string FooterRightClass
-        => IsFooterRightWarning ? "gwios-kpi-tile-footer-value--warning" : "gwios-kpi-tile-footer-value";
+    private static string ToClassSuffix(GwiOSKpiAccent accent)
+        => accent.ToString().ToLowerInvariant();
 }

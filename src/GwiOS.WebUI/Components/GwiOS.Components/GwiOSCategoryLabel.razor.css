@@ -1,0 +1,16 @@
+.gwios-category-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.gwios-category-label-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.gwios-category-label-path {
+    font-size: 13.5px;
+}

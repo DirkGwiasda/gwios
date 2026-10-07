@@ -5,42 +5,50 @@
 <div class="gwios-page">
     <h1>Haushaltsbuch</h1>
 
-    <div class="gwios-tile-grid gwios-tile-grid--wide">
-        <GwiOSSection Title="Einnahmen" Accent="GwiOSSectionAccent.Success">
-            <div class="gwios-category-tree-header">
-                <span class="gwios-category-tree-sum">@FormatSum(GetTypeSum(CategoryType.Income))</span>
+    <div class="gwios-kategorien-grid">
+        <GwiOSCard Title="Einnahmen"
+                   Hint="@FormatSum(GetTypeSum(CategoryType.Income))"
+                   Accent="GwiOSCardAccent.Success"
+                   Variant="GwiOSCardVariant.Flush">
+            <HeaderContent>
                 <button type="button"
-                        class="gwios-button gwios-button--secondary gwios-button--compact"
+                        class="gwios-button gwios-button--secondary gwios-button--compact gwios-kategorien-add-root"
                         @onclick="() => OpenNewCategory(CategoryType.Income, null)">
                     + Hauptkategorie
                 </button>
-            </div>
-            <GwiOSCategoryTree Categories="IncomeCategories"
-                               Sums="_sums"
-                               CollapsedCategoryIds="_collapsedCategoryIds"
-                               OnToggleCollapse="ToggleCollapse"
-                               OnAddChild="parentId => OpenNewCategory(CategoryType.Income, parentId)"
-                               OnEdit="OpenEditCategory"
-                               OnDelete="DeleteCategoryAsync" />
-        </GwiOSSection>
+            </HeaderContent>
+            <ChildContent>
+                <GwiOSCategoryTree Categories="IncomeCategories"
+                                   Sums="_sums"
+                                   CollapsedCategoryIds="_collapsedCategoryIds"
+                                   OnToggleCollapse="ToggleCollapse"
+                                   OnAddChild="parentId => OpenNewCategory(CategoryType.Income, parentId)"
+                                   OnEdit="OpenEditCategory"
+                                   OnDelete="DeleteCategoryAsync" />
+            </ChildContent>
+        </GwiOSCard>
 
-        <GwiOSSection Title="Ausgaben" Accent="GwiOSSectionAccent.Primary">
-            <div class="gwios-category-tree-header">
-                <span class="gwios-category-tree-sum">@FormatSum(GetTypeSum(CategoryType.Expense))</span>
+        <GwiOSCard Title="Ausgaben"
+                   Hint="@FormatSum(GetTypeSum(CategoryType.Expense))"
+                   Accent="GwiOSCardAccent.Danger"
+                   Variant="GwiOSCardVariant.Flush">
+            <HeaderContent>
                 <button type="button"
-                        class="gwios-button gwios-button--secondary gwios-button--compact"
+                        class="gwios-button gwios-button--secondary gwios-button--compact gwios-kategorien-add-root"
                         @onclick="() => OpenNewCategory(CategoryType.Expense, null)">
                     + Hauptkategorie
                 </button>
-            </div>
-            <GwiOSCategoryTree Categories="ExpenseCategories"
-                               Sums="_sums"
-                               CollapsedCategoryIds="_collapsedCategoryIds"
-                               OnToggleCollapse="ToggleCollapse"
-                               OnAddChild="parentId => OpenNewCategory(CategoryType.Expense, parentId)"
-                               OnEdit="OpenEditCategory"
-                               OnDelete="DeleteCategoryAsync" />
-        </GwiOSSection>
+            </HeaderContent>
+            <ChildContent>
+                <GwiOSCategoryTree Categories="ExpenseCategories"
+                                   Sums="_sums"
+                                   CollapsedCategoryIds="_collapsedCategoryIds"
+                                   OnToggleCollapse="ToggleCollapse"
+                                   OnAddChild="parentId => OpenNewCategory(CategoryType.Expense, parentId)"
+                                   OnEdit="OpenEditCategory"
+                                   OnDelete="DeleteCategoryAsync" />
+            </ChildContent>
+        </GwiOSCard>
     </div>
 </div>
 

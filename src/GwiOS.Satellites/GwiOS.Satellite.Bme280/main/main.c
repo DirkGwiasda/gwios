@@ -11,6 +11,7 @@
 #include "measurement_store.h"
 #include "ping_client.h"
 #include "satellite_config.h"
+#include "status_led.h"
 #include "wifi_connection.h"
 
 // Board and wiring of the BME280 satellite, documented in docs/devplan.md. The pins only fit this board,
@@ -20,12 +21,29 @@
 #define SATELLITE_SDA_GPIO GPIO_NUM_21
 #define SATELLITE_SCL_GPIO GPIO_NUM_22
 
+// Status lamps, each with its own series resistor to GND. GPIO 25 to 27 are free on this board: no strapping
+// pins, no flash lines, and nothing that pulses while the board boots.
+#define SATELLITE_BLUE_LED_GPIO GPIO_NUM_25
+#define SATELLITE_GREEN_LED_GPIO GPIO_NUM_26
+#define SATELLITE_RED_LED_GPIO GPIO_NUM_27
+
 #define MEASUREMENT_INTERVAL_MS 5000
 
 // Prefix that makes satellites easy to spot in the device list of the router.
 #define HOSTNAME_PREFIX "gwios-"
 
 static const char *TAG = "satellite";
+
+// The lamps only report, so a board without them (or with a pin that cannot be driven) keeps measuring.
+static void start_status_leds(void)
+{
+    esp_err_t result =
+        status_led_start(SATELLITE_BLUE_LED_GPIO, SATELLITE_GREEN_LED_GPIO, SATELLITE_RED_LED_GPIO);
+    if (result != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Status LEDs could not be started: %s.", esp_err_to_name(result));
+    }
+}
 
 static i2c_master_bus_handle_t create_bus(void)
 {
@@ -116,6 +134,9 @@ static void measure(bme280_handle_t sensor)
 
 void app_main(void)
 {
+    // First, so the blue lamp shows right at power-up that the firmware runs.
+    start_status_leds();
+
     ESP_ERROR_CHECK(measurement_store_init());
 
     // Static because the configuration is needed for the whole lifetime of the firmware and is too large

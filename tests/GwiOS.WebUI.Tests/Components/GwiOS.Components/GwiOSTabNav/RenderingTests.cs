@@ -45,4 +45,23 @@ public sealed class RenderingTests : BunitContext
 
         Assert.Equal("Adminbereiche", tabNav.Find("nav").GetAttribute("aria-label"));
     }
+
+    [Fact]
+    public void ShowsTheTabsAsTabs_ByDefault()
+    {
+        IRenderedComponent<GwiOSTabNavUnderTest> tabNav = Render<GwiOSTabNavUnderTest>(parameters => parameters
+            .Add(component => component.Tabs, _tabs));
+
+        Assert.True(tabNav.Find("nav").ClassList.Contains("gwios-tab-nav--tabs"));
+    }
+
+    [Fact]
+    public void ShowsTheTabsAsPills_WhenTheVariantIsPills()
+    {
+        IRenderedComponent<GwiOSTabNavUnderTest> tabNav = Render<GwiOSTabNavUnderTest>(parameters => parameters
+            .Add(component => component.Tabs, _tabs)
+            .Add(component => component.Variant, GwiOSTabNavVariant.Pills));
+
+        Assert.True(tabNav.Find("nav").ClassList.Contains("gwios-tab-nav--pills"));
+    }
 }

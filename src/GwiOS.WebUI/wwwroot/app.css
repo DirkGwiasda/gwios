@@ -272,6 +272,30 @@ h1:focus {
     line-height: 1;
 }
 
+/* Umschalter aus einer Gruppe, von dem einer gewählt ist, z.B. "Einnahme"/"Ausgabe" oder ein Zeitraum. */
+.gwios-toggle-button {
+    padding: 9px 16px;
+    border: 1px solid var(--gwios-border);
+    border-radius: var(--gwios-radius-small);
+    background: var(--gwios-surface);
+    color: var(--gwios-text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.gwios-toggle-button:hover {
+    color: var(--gwios-primary-hover);
+}
+
+.gwios-toggle-button.gwios-toggle-button--selected {
+    border-color: rgba(0, 170, 255, 0.6);
+    background: rgba(0, 136, 255, 0.16);
+    color: var(--gwios-primary);
+}
+
 /* Kleine quadratische Schaltfläche mit Symbol, z.B. in Kacheln. */
 .gwios-icon-button {
     display: inline-flex;
@@ -368,10 +392,26 @@ h1:focus {
     min-width: 180px;
 }
 
+/* Schmale Leiste über dem Inhalt mit Umschaltern, Kennzahlen oder Schaltflächen, z.B. der Monatsumschalter. */
+.gwios-toolbar-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border: 1px solid var(--gwios-border);
+    border-radius: var(--gwios-radius-large);
+    background: var(--gwios-surface);
+}
+
 .gwios-stack {
     display: flex;
     flex-direction: column;
     gap: 20px;
+}
+
+.gwios-stack.gwios-stack--compact {
+    gap: 16px;
 }
 
 .gwios-tile-grid {
@@ -398,8 +438,9 @@ h1:focus {
    Bildschirmen wird daraus eine Karte je Zeile.
    -------------------------------------------------------------------------- */
 
+/* Passt eine breite Tabelle nicht ganz hinein, lässt sie sich waagerecht scrollen statt abgeschnitten zu werden. */
 .gwios-table-panel {
-    overflow: hidden;
+    overflow-x: auto;
     border: 1px solid var(--gwios-border);
     border-radius: var(--gwios-radius-large);
     background: var(--gwios-surface);
@@ -419,7 +460,7 @@ h1:focus {
     color: var(--gwios-primary);
     font-family: var(--gwios-font-display);
     font-size: 13.5px;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.04em;
     text-align: left;
 }
@@ -427,7 +468,7 @@ h1:focus {
 .gwios-table td {
     padding: 10px 12px;
     border-bottom: 1px solid var(--gwios-border-subtle);
-    vertical-align: top;
+    vertical-align: middle;
 }
 
 .gwios-table tbody tr:last-child td {
@@ -438,6 +479,30 @@ h1:focus {
     color: var(--gwios-text-muted);
     font-size: 13.5px;
     white-space: nowrap;
+}
+
+/* Rechtsbündige Spalte für Beträge und Aktionen, gilt für Kopf- und Datenzelle. */
+.gwios-table .gwios-table-end {
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* Tabelle mit vielen Spalten, z.B. Buchungen: kleinere Kopfzeile. */
+.gwios-table.gwios-table--compact th {
+    font-size: 12.5px;
+}
+
+.gwios-table.gwios-table--compact .gwios-badge {
+    font-weight: 600;
+}
+
+.gwios-table.gwios-table--compact .gwios-icon-button {
+    border-radius: var(--gwios-radius-small);
+    font-size: 12px;
+}
+
+.gwios-table.gwios-table--compact .gwios-icon-button:not(.gwios-icon-button--primary) {
+    font-weight: 600;
 }
 
 /* --------------------------------------------------------------------------
@@ -567,6 +632,17 @@ h1:focus {
         min-width: 0;
     }
 
+    .gwios-toolbar-panel {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .gwios-toolbar-panel > .gwios-button,
+    .gwios-toolbar-panel > .gwios-input {
+        width: 100%;
+        min-width: 0;
+    }
+
     .gwios-icon-button {
         width: 36px;
         height: 36px;
@@ -593,9 +669,15 @@ h1:focus {
         background: rgba(0, 136, 255, 0.04);
     }
 
-    .gwios-table td {
+    .gwios-table td,
+    .gwios-table .gwios-table-end {
         padding: 6px 12px;
         border-bottom: none;
+        text-align: left;
+    }
+
+    .gwios-table .gwios-table-actions {
+        justify-content: flex-start;
     }
 
     .gwios-table td::before {
@@ -604,6 +686,7 @@ h1:focus {
         margin-bottom: 2px;
         color: var(--gwios-text-dim);
         font-size: 11px;
+        font-weight: 400;
         letter-spacing: 0.06em;
         text-transform: uppercase;
     }
@@ -633,12 +716,11 @@ h1:focus {
     justify-content: flex-end;
     align-items: center;
     gap: 4px;
-    flex-wrap: wrap;
 }
 
 .gwios-form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 14px;
 }
 

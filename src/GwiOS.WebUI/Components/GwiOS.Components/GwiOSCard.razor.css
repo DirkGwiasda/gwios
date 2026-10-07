@@ -1,0 +1,84 @@
+.gwios-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border: 1px solid var(--gwios-border);
+    border-radius: var(--gwios-radius-large);
+    background: var(--gwios-surface);
+    box-shadow: var(--gwios-glow);
+}
+
+.gwios-card--padded {
+    gap: 14px;
+    padding: 18px;
+}
+
+.gwios-card--flush {
+    overflow: hidden;
+}
+
+.gwios-card-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.gwios-card--flush .gwios-card-header {
+    flex-wrap: nowrap;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(0, 136, 255, 0.2);
+    background: linear-gradient(180deg, rgba(0, 136, 255, 0.08), rgba(0, 136, 255, 0.02));
+}
+
+.gwios-card-title {
+    margin: 0;
+    font-family: var(--gwios-font-display);
+    font-size: 14.5px;
+    font-weight: 600;
+}
+
+/* Wie in der Vorlage steht der Titel einer Kopfleiste in der Grundschrift, nicht in Orbitron. */
+.gwios-card--flush .gwios-card-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-family: var(--gwios-font);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gwios-card-title--primary {
+    color: var(--gwios-primary);
+}
+
+.gwios-card-title--success {
+    color: var(--gwios-success);
+}
+
+.gwios-card-title--danger {
+    color: var(--gwios-danger);
+}
+
+.gwios-card-hint {
+    font-size: 12.5px;
+    color: var(--gwios-text-dim);
+    font-variant-numeric: tabular-nums;
+}
+
+.gwios-card--flush .gwios-card-hint {
+    white-space: nowrap;
+}
+
+.gwios-card-header-content {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    margin-left: auto;
+}
+
+.gwios-card--flush .gwios-card-header-content {
+    margin-left: 0;
+}

@@ -2,8 +2,13 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    min-width: 0;
     padding: 16px 18px;
+    border: 1px solid var(--gwios-border);
     border-left: 3px solid var(--gwios-primary);
+    border-radius: var(--gwios-radius-large);
+    background: var(--gwios-surface);
+    box-shadow: var(--gwios-glow);
 }
 
 .gwios-kpi-tile--success {
@@ -14,6 +19,14 @@
     border-left-color: var(--gwios-danger);
 }
 
+.gwios-kpi-tile--warning {
+    border-left-color: var(--gwios-warning);
+}
+
+.gwios-kpi-tile--muted {
+    border-left-color: var(--gwios-text-faint);
+}
+
 .gwios-kpi-tile-label {
     font-size: 11.5px;
     letter-spacing: 0.06em;
@@ -22,32 +35,38 @@
 }
 
 .gwios-kpi-tile-value {
-    font-family: var(--gwios-font-display);
     font-size: 24px;
     font-weight: 700;
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
-    color: var(--gwios-text);
-}
-
-.gwios-kpi-tile--success .gwios-kpi-tile-value {
-    color: var(--gwios-success);
-}
-
-.gwios-kpi-tile--danger .gwios-kpi-tile-value {
-    color: var(--gwios-danger);
 }
 
 .gwios-kpi-tile-footer {
     display: flex;
     justify-content: space-between;
     gap: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0, 136, 255, 0.14);
     font-size: 12.5px;
     color: var(--gwios-text-dim);
-    padding-top: 8px;
-    border-top: 1px solid var(--gwios-border-subtle);
 }
 
-.gwios-kpi-tile-footer-value--warning {
+.gwios-kpi-text--primary {
+    color: var(--gwios-primary);
+}
+
+.gwios-kpi-text--success {
+    color: var(--gwios-success);
+}
+
+.gwios-kpi-text--danger {
+    color: var(--gwios-danger);
+}
+
+.gwios-kpi-text--warning {
     color: var(--gwios-warning);
+}
+
+.gwios-kpi-text--muted {
+    color: var(--gwios-text-faint);
 }

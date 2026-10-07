@@ -1,4 +1,4 @@
-<nav class="gwios-tab-nav" aria-label="@AriaLabel">
+<nav class="gwios-tab-nav @VariantClass" aria-label="@AriaLabel">
     @foreach (GwiOSTab tab in Tabs)
     {
         <NavLink class="gwios-tab" href="@tab.Href" Match="NavLinkMatch.Prefix">@tab.Text</NavLink>
@@ -17,4 +17,13 @@
     /// </summary>
     [Parameter]
     public string AriaLabel { get; set; } = "Unterbereiche";
+
+    /// <summary>
+    /// Look of the tabs.
+    /// </summary>
+    [Parameter]
+    public GwiOSTabNavVariant Variant { get; set; } = GwiOSTabNavVariant.Tabs;
+
+    private string VariantClass
+        => Variant == GwiOSTabNavVariant.Pills ? "gwios-tab-nav--pills" : "gwios-tab-nav--tabs";
 }

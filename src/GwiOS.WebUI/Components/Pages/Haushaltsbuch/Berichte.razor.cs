@@ -54,7 +54,7 @@ public partial class Berichte
         get
         {
             List<DateOnly> months = RangeMonthStarts;
-            return $"{MonthNames[months[0].Month - 1]} {months[0].Year} – {MonthNames[months[^1].Month - 1]} {months[^1].Year}";
+            return $"{months.Count} Monate bis {MonthNames[months[^1].Month - 1]} {months[^1].Year}";
         }
     }
 
@@ -66,8 +66,8 @@ public partial class Berichte
 
     private string DonutHint
         => _donutRootId is Guid rootId
-            ? $"Unterkategorien von „{_categories.SingleOrDefault(category => category.Id == rootId)?.Name}“ – zum Zurückgehen klicken"
-            : "Hauptkategorien – zum Aufschlüsseln klicken";
+            ? $"{_categories.SingleOrDefault(category => category.Id == rootId)?.Name} · zum Zurückgehen Eintrag anklicken"
+            : "Hauptkategorien · zum Aufklappen anklicken";
 
     private List<GwiOSLineSeries> LineSeries
         => ComputeLineSeries();

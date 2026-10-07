@@ -64,8 +64,11 @@ public partial class Kategorien
     protected override async Task OnInitializedAsync()
         => await LoadAsync();
 
+    // Only the root categories count, because the sum of a category already includes all its descendants.
     private decimal GetTypeSum(CategoryType type)
-        => _categories.Where(category => category.Type == type).Sum(category => _sums.GetValueOrDefault(category.Id));
+        => _categories
+            .Where(category => (category.Type == type) && (category.ParentId is null))
+            .Sum(category => _sums.GetValueOrDefault(category.Id));
 
     private string FormatSum(decimal value)
         => value == 0 ? "—" : value.ToString("C", GermanCulture);
