@@ -33,7 +33,7 @@ public sealed class DashboardPageTests(GwiOSAppFixture app) : IAsyncLifetime
     [Fact]
     public async Task ShowsTheHeadingAndKpiTiles()
     {
-        await _page.GotoAsync($"{app.BaseUrl}/haushaltsbuch/dashboard");
+        await app.OpenAsync(_page, "/haushaltsbuch/dashboard");
 
         await Expect(_page.Locator("h1")).ToHaveTextAsync("Haushaltsbuch");
         await Expect(_page.GetByText("Gesamteinnahmen")).ToBeVisibleAsync();
@@ -48,7 +48,7 @@ public sealed class DashboardPageTests(GwiOSAppFixture app) : IAsyncLifetime
         Category category = await seeder.CreateExpenseCategoryAsync();
         string description = TestDataSeeder.CreateUniqueName("e2e-booking");
 
-        await _page.GotoAsync($"{app.BaseUrl}/haushaltsbuch/dashboard");
+        await app.OpenAsync(_page, "/haushaltsbuch/dashboard");
         await _page.GetByRole(AriaRole.Button, new() { Name = "+ Neue Buchung" }).ClickAsync();
         await _page.Locator("#booking-edit-amount").FillAsync("42.50");
         await _page.Locator("#booking-edit-category").SelectOptionAsync(category.Id.ToString());
@@ -73,7 +73,7 @@ public sealed class DashboardPageTests(GwiOSAppFixture app) : IAsyncLifetime
 
         try
         {
-            await _page.GotoAsync($"{app.BaseUrl}/haushaltsbuch/dashboard");
+            await app.OpenAsync(_page, "/haushaltsbuch/dashboard");
             ILocator dialog = await OpenFixBookingSelectionAsync();
             await Expect(dialog.GetByRole(AriaRole.Checkbox, new() { Name = keptItem.Name })).ToBeCheckedAsync();
             await Expect(dialog.GetByRole(AriaRole.Checkbox, new() { Name = deselectedItem.Name })).ToBeCheckedAsync();
@@ -100,7 +100,7 @@ public sealed class DashboardPageTests(GwiOSAppFixture app) : IAsyncLifetime
 
         try
         {
-            await _page.GotoAsync($"{app.BaseUrl}/haushaltsbuch/dashboard");
+            await app.OpenAsync(_page, "/haushaltsbuch/dashboard");
             ILocator dialog = await OpenFixBookingSelectionAsync();
             await dialog.GetByRole(AriaRole.Button, new() { Name = "Abbrechen" }).ClickAsync();
 

@@ -25,7 +25,7 @@ public sealed class BerichtePageTests(GwiOSAppFixture app) : IAsyncLifetime
     [Fact]
     public async Task ShowsTheReportSections()
     {
-        await _page.GotoAsync($"{app.BaseUrl}/haushaltsbuch/berichte");
+        await app.OpenAsync(_page, "/haushaltsbuch/berichte");
 
         await Expect(_page.Locator("h1")).ToHaveTextAsync("Haushaltsbuch");
         await Expect(_page.GetByText("Soll / Ist")).ToBeVisibleAsync();
@@ -36,7 +36,7 @@ public sealed class BerichtePageTests(GwiOSAppFixture app) : IAsyncLifetime
     [Fact]
     public async Task SwitchesTheSelectedRange()
     {
-        await _page.GotoAsync($"{app.BaseUrl}/haushaltsbuch/berichte");
+        await app.OpenAsync(_page, "/haushaltsbuch/berichte");
 
         await _page.GetByRole(AriaRole.Button, new() { Name = "Letzte 6 Monate" }).ClickAsync();
 

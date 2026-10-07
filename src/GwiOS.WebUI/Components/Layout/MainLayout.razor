@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 
-<div class="gwios-app">
+@* data-interactive tells the end-to-end tests when the page reacts to clicks; before, it is only prerendered. *@
+<div class="gwios-app" data-interactive="@(RendererInfo.IsInteractive ? "true" : "false")">
     <div class="gwios-backdrop" aria-hidden="true">
         <div class="gwios-backdrop-gradient"></div>
         <div class="gwios-backdrop-orb gwios-backdrop-orb--blue"></div>

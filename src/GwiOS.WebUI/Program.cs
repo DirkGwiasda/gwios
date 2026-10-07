@@ -54,6 +54,9 @@ public class Program
 
         if (builder.Environment.IsEnvironment(E2EEnvironmentName))
         {
+            // "dotnet run" serves the static web assets (the Blazor script, the bundled component styles) only in
+            // Development by itself. Without them the end-to-end tests would get pages that never become interactive.
+            builder.WebHost.UseStaticWebAssets();
             builder.Services.AddAuthentication(E2ETestAuthenticationHandler.SchemeName)
                 .AddScheme<AuthenticationSchemeOptions, E2ETestAuthenticationHandler>(
                     E2ETestAuthenticationHandler.SchemeName,

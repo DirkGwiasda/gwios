@@ -30,6 +30,16 @@ public sealed class GwiOSAppFixture : IAsyncLifetime
     /// </summary>
     public IBrowser? Browser { get; private set; }
 
+    /// <summary>
+    /// Opens the page at the given path (e.g. <c>/haushaltsbuch/dashboard</c>) and waits until it is interactive.
+    /// Until then the page is only prerendered, and clicks on it would get lost.
+    /// </summary>
+    public async Task OpenAsync(IPage page, string path)
+    {
+        await page.GotoAsync($"{BaseUrl}{path}");
+        await page.Locator(".gwios-app[data-interactive=true]").WaitForAsync();
+    }
+
     public async ValueTask InitializeAsync()
     {
         StartWebUIProcess();

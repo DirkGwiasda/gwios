@@ -238,6 +238,19 @@ Fakes, sondern gegen eine echte Datenbank und eine echte laufende WebUI geprüft
   scheiterte an einer veralteten `netcoreapp3.1`-Zielversion; stattdessen ein Wegwerf-Konsolenprojekt mit
   `Microsoft.Playwright.Program.Main(["install", "chromium"])` verwendet, in derselben Paketversion wie das
   Testprojekt.
+- E2E-Tests am 07.10.2026 erstmals gelaufen, zunächst 6 von 10 rot — zwei Ursachen, beide behoben: (1) `dotnet run`
+  liefert die Static Web Assets (`blazor.web.js`, gebündelte Komponenten-Styles) von selbst nur in `Development`;
+  in `E2E` antworteten sie mit 500, die Seiten wurden nie interaktiv. `Program` ruft deshalb in `E2E`
+  `UseStaticWebAssets()` auf. (2) Die Tests klickten auf die nur vorgerenderte Seite, bevor die Verbindung zum
+  Server stand. `MainLayout` setzt jetzt `data-interactive` (aus `RendererInfo.IsInteractive`), und
+  `GwiOSAppFixture.OpenAsync` wartet nach dem Laden darauf; Seiten in E2E-Tests immer darüber öffnen. Danach
+  dreimal hintereinander 10/10 grün. Vermutlich waren das auch die Fehlschläge von `dotnet test` beim Deploy.
+- Docker ist seit 07.10.2026 in der VM installiert (`docker.io`, `docker-buildx`, `qemu-user-binfmt` für
+  linux/arm64). Datenbanktests ohne die echte Test-DB: Wegwerf-Container `postgres:17` starten, Rolle `gwios_user`
+  und Datenbank anlegen, `GwiOS.DB.TestConnectionstring` per `env` auf ihn setzen — so liefen alle 640 Core-Tests und
+  die E2E-Tests grün. Stolpersteine: Die Sitzung sieht die Gruppe `docker` erst nach neuer Anmeldung (bis dahin
+  `setfacl -m user:tija:rw /var/run/docker.sock`); `docker build` scheiterte einmal am IPv6-Download des
+  Basis-Images (VM ohne IPv6-Route) — vorher `docker pull --platform linux/arm64 mcr.microsoft.com/dotnet/aspnet:10.0`.
 
 ### Offene Fragen
 
@@ -301,11 +314,14 @@ Fertig: `DatabaseBackupManager`, `DatabaseBackupPgDumpRepository`, Endpunkt `GET
 „Datensicherung“, Dockerfile mit `pg_dump` 17, `Deploy-WebUI.ps1` baut damit. Unit-Tests grün (Core 544,
 WebUI 420).
 
-- [ ] Erster Deploy mit Dockerfile: `docker build` lief in der Sandbox nicht (kein Docker); das Skript wurde nur auf
-      Syntax geprüft (PowerShell 7), `dotnet publish` für linux-arm64 und die Verfügbarkeit von
-      `postgresql-client-17` (17.11) für Ubuntu 24.04/arm64 im PostgreSQL-Archiv sind geprüft.
-- [ ] Eine heruntergeladene Sicherung einmal probehalber wiederherstellen (z. B. mit `pg_restore` in eine leere
-      Datenbank), erst dann ist die Sicherung erwiesen.
+- [x] Erster Deploy mit Dockerfile: Dirk hat deployt und in Produktion eine Sicherung heruntergeladen (07.10.2026).
+- [x] Probe-Wiederherstellung (07.10.2026, in der VM mit Docker, nur Wegwerf-Container): Image wie
+      `Deploy-WebUI.ps1` für linux/arm64 gebaut (Emulation, ~80 s; UID 1654, `pg_dump` 17.11), gegen Postgres 17.11
+      mit Testdaten in allen Tabellen gestartet, `/api/backup` heruntergeladen (Dateiname in Ortszeit, temporäre
+      Datei danach entfernt), mit `pg_restore` in eine leere Datenbank zurückgespielt: alle Fachtabellen inhaltlich
+      gleich, Constraints und Indizes vollständig, Log-Tabelle vorhanden und leer; die App startet auf der
+      wiederhergestellten Datenbank und zeigt die Daten. Fehlerfall (Datenbank gestoppt) leitet auf
+      `?fehlgeschlagen=true` um.
 
 ### Entscheidungen
 

@@ -26,7 +26,7 @@ public sealed class FixkostenPageTests(GwiOSAppFixture app) : IAsyncLifetime
     [Fact]
     public async Task ShowsTheHeadingAndMonthlyEquivalentPanel()
     {
-        await _page.GotoAsync($"{app.BaseUrl}/haushaltsbuch/fixkosten");
+        await app.OpenAsync(_page, "/haushaltsbuch/fixkosten");
 
         await Expect(_page.Locator("h1")).ToHaveTextAsync("Haushaltsbuch");
         await Expect(_page.GetByText("Monatliches Äquivalent (aktiv)")).ToBeVisibleAsync();
@@ -39,7 +39,7 @@ public sealed class FixkostenPageTests(GwiOSAppFixture app) : IAsyncLifetime
         Category category = await seeder.CreateExpenseCategoryAsync();
         string name = TestDataSeeder.CreateUniqueName("e2e-fixkosten");
 
-        await _page.GotoAsync($"{app.BaseUrl}/haushaltsbuch/fixkosten");
+        await app.OpenAsync(_page, "/haushaltsbuch/fixkosten");
         await _page.GetByRole(AriaRole.Button, new() { Name = "+ Neuer wiederkehrender Posten" }).ClickAsync();
         await _page.Locator("#fix-edit-name").FillAsync(name);
         await _page.Locator("#fix-edit-category").SelectOptionAsync(category.Id.ToString());

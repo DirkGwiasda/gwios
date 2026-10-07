@@ -25,7 +25,7 @@ public sealed class KategorienPageTests(GwiOSAppFixture app) : IAsyncLifetime
     [Fact]
     public async Task ShowsTheIncomeAndExpenseTrees()
     {
-        await _page.GotoAsync($"{app.BaseUrl}/haushaltsbuch/kategorien");
+        await app.OpenAsync(_page, "/haushaltsbuch/kategorien");
 
         await Expect(_page.Locator("h1")).ToHaveTextAsync("Haushaltsbuch");
         await Expect(_page.GetByText("Einnahmen", new() { Exact = true })).ToBeVisibleAsync();
@@ -36,7 +36,7 @@ public sealed class KategorienPageTests(GwiOSAppFixture app) : IAsyncLifetime
     public async Task CreatesAndDeletesAnExpenseRootCategory()
     {
         string name = TestDataSeeder.CreateUniqueName("e2e-category");
-        await _page.GotoAsync($"{app.BaseUrl}/haushaltsbuch/kategorien");
+        await app.OpenAsync(_page, "/haushaltsbuch/kategorien");
 
         ILocator expenseSection = _page.Locator("section", new PageLocatorOptions { HasText = "Ausgaben" });
         await expenseSection.GetByRole(AriaRole.Button, new() { Name = "+ Hauptkategorie" }).ClickAsync();
